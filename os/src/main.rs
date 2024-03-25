@@ -5,6 +5,10 @@
 
 //use crate::drivers::{GPU_DEVICE, KEYBOARD_DEVICE, MOUSE_DEVICE, INPUT_CONDVAR};
 use crate::drivers::{GPU_DEVICE, KEYBOARD_DEVICE, MOUSE_DEVICE};
+use arch::{
+	ArchInterface,Context,TrapType,PhysPage
+};
+use fdt::node::FdtNode;
 extern crate alloc;
 
 #[macro_use]
@@ -50,6 +54,44 @@ use sync::UPIntrFreeCell;
 lazy_static! {
     pub static ref DEV_NON_BLOCKING_ACCESS: UPIntrFreeCell<bool> =
         unsafe { UPIntrFreeCell::new(false) };
+}
+
+struct ArchInterfaceImpl;
+
+#[crate_interface::impl_interface]
+impl ArchInterface for ArchInterfaceImpl {
+	fn init_logging() {
+        let str = include_str!("logo.txt");
+        println!("{}", str);
+    }
+	fn kernel_interrupt(ctx: &mut Context, trap_type: TrapType)
+	{
+
+	}
+	fn add_memory_region(start: usize, end: usize)
+	{
+
+	}
+	fn main(hartid: usize)
+	{
+
+	}
+	fn frame_alloc_persist() -> PhysPage
+	{
+		PhysPage::new(0)
+	}
+	fn frame_unalloc(ppn: PhysPage)
+	{
+
+	}
+	fn prepare_drivers()
+	{
+
+	}
+	fn try_to_add_device(fdtNode: &FdtNode)
+	{
+
+	}
 }
 
 #[no_mangle]
