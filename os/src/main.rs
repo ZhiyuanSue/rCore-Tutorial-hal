@@ -35,18 +35,6 @@ mod trap;
 use crate::drivers::chardev::CharDevice;
 use crate::drivers::chardev::UART;
 
-core::arch::global_asm!(include_str!("entry.asm"));
-
-fn clear_bss() {
-    extern "C" {
-        fn sbss();
-        fn ebss();
-    }
-    unsafe {
-        core::slice::from_raw_parts_mut(sbss as usize as *mut u8, ebss as usize - sbss as usize)
-            .fill(0);
-    }
-}
 
 use lazy_static::*;
 use sync::UPIntrFreeCell;
@@ -95,8 +83,8 @@ impl ArchInterface for ArchInterfaceImpl {
 }
 
 #[no_mangle]
-pub fn rust_main() -> ! {
-    clear_bss();
+pub fn main() -> ! {
+    arch::clear_bss();
     mm::init();
     UART.init();
     println!("KERN: init gpu");

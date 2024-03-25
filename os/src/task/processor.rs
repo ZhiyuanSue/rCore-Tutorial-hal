@@ -95,9 +95,11 @@ pub fn current_kstack_top() -> usize {
     if let Some(task) = current_task() {
         task.kstack.get_top()
     } else {
-        let mut boot_stack_top;
-        unsafe { asm!("la {},boot_stack_top",out(reg) boot_stack_top) };
-        boot_stack_top
+        // let mut boot_stack_top;
+        // unsafe { asm!("la {},boot_stack_top",out(reg) boot_stack_top) };
+        // boot_stack_top
+		/*TODO: need to change this part*/
+		0
     }
     // current_task().unwrap().kstack.get_top()
 }

@@ -16,10 +16,10 @@ extern "C" {
     fn etext();
     fn srodata();
     fn erodata();
-    fn sdata();
-    fn edata();
+    fn _sdata();
+    fn _edata();
     fn sbss_with_stack();
-    fn ebss();
+    fn _ebss();
     fn ekernel();
     fn strampoline();
 }
@@ -125,8 +125,8 @@ impl MemorySet {
         // println!("mapping .data section");
         memory_set.push(
             MapArea::new(
-                (sdata as usize).into(),
-                (edata as usize).into(),
+                (_sdata as usize).into(),
+                (_edata as usize).into(),
                 MapType::Identical,
                 MapPermission::R | MapPermission::W,
             ),
@@ -136,7 +136,7 @@ impl MemorySet {
         memory_set.push(
             MapArea::new(
                 (sbss_with_stack as usize).into(),
-                (ebss as usize).into(),
+                (_ebss as usize).into(),
                 MapType::Identical,
                 MapPermission::R | MapPermission::W,
             ),
@@ -360,7 +360,7 @@ pub fn remap_test() {
     let mut kernel_space = KERNEL_SPACE.exclusive_access();
     let mid_text: VirtAddr = ((stext as usize + etext as usize) / 2).into();
     let mid_rodata: VirtAddr = ((srodata as usize + erodata as usize) / 2).into();
-    let mid_data: VirtAddr = ((sdata as usize + edata as usize) / 2).into();
+    let mid_data: VirtAddr = ((_sdata as usize + _edata as usize) / 2).into();
     assert!(!kernel_space
         .page_table
         .translate(mid_text.floor())

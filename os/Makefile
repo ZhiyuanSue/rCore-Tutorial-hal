@@ -56,7 +56,7 @@ $(APPS):
 
 kernel:
 	@echo Platform: $(BOARD)
-	@cp src/linker-$(BOARD).ld src/linker.ld
+	@cp ./linker_riscv64_$(BOARD).lds src/linker.ld
 	@cargo build --release
 	@rm src/linker.ld
 
