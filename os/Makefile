@@ -7,6 +7,9 @@ DISASM_TMP := target/$(TARGET)/$(MODE)/asm
 FS_IMG := ../user/target/$(TARGET)/$(MODE)/fs.img
 APPS := ../user/src/bin/*
 
+# Debug
+DBG	?=false
+
 # BOARD
 BOARD := qemu
 SBI ?= rustsbi
@@ -85,6 +88,9 @@ QEMU_ARGS := -machine virt \
 			 -device virtio-mouse-device \
 			 -device virtio-net-device,netdev=net0 \
 			 -netdev user,id=net0,hostfwd=udp::6200-:2000,hostfwd=tcp::6201-:80
+ifeq ($(DBG),true)
+	QEMU_ARGS	+=	-s -S
+endif
 
 fdt:
 	@qemu-system-riscv64 -M 128m -machine virt,dumpdtb=virt.out

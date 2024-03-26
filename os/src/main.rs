@@ -5,6 +5,7 @@
 
 //use crate::drivers::{GPU_DEVICE, KEYBOARD_DEVICE, MOUSE_DEVICE, INPUT_CONDVAR};
 use crate::drivers::{GPU_DEVICE, KEYBOARD_DEVICE, MOUSE_DEVICE};
+use arch::shutdown;
 use arch::{
 	ArchInterface,Context,TrapType,PhysPage
 };
@@ -49,6 +50,9 @@ struct ArchInterfaceImpl;
 #[crate_interface::impl_interface]
 impl ArchInterface for ArchInterfaceImpl {
 	fn init_logging() {
+		UART.init();
+		UART.write(b'd');
+		shutdown();
         let str = include_str!("logo.txt");
         println!("{}", str);
     }
@@ -62,7 +66,23 @@ impl ArchInterface for ArchInterfaceImpl {
 	}
 	fn main(hartid: usize)
 	{
-
+		mm::init();
+		println!("KERN: init gpu");
+		let _gpu = GPU_DEVICE.clone();
+		println!("KERN: init keyboard");
+		let _keyboard = KEYBOARD_DEVICE.clone();
+		println!("KERN: init mouse");
+		let _mouse = MOUSE_DEVICE.clone();
+		println!("KERN: init trap");
+		trap::init();
+		trap::enable_timer_interrupt();
+		timer::set_next_trigger();
+		board::device_init();
+		fs::list_apps();
+		task::add_initproc();
+		*DEV_NON_BLOCKING_ACCESS.exclusive_access() = true;
+		task::run_tasks();
+		panic!("Unreachable in rust_main!");
 	}
 	fn frame_alloc_persist() -> PhysPage
 	{
@@ -80,27 +100,4 @@ impl ArchInterface for ArchInterfaceImpl {
 	{
 
 	}
-}
-
-#[no_mangle]
-pub fn main() -> ! {
-    arch::clear_bss();
-    mm::init();
-    UART.init();
-    println!("KERN: init gpu");
-    let _gpu = GPU_DEVICE.clone();
-    println!("KERN: init keyboard");
-    let _keyboard = KEYBOARD_DEVICE.clone();
-    println!("KERN: init mouse");
-    let _mouse = MOUSE_DEVICE.clone();
-    println!("KERN: init trap");
-    trap::init();
-    trap::enable_timer_interrupt();
-    timer::set_next_trigger();
-    board::device_init();
-    fs::list_apps();
-    task::add_initproc();
-    *DEV_NON_BLOCKING_ACCESS.exclusive_access() = true;
-    task::run_tasks();
-    panic!("Unreachable in rust_main!");
 }
