@@ -12,7 +12,8 @@ DBG	?=false
 
 # BOARD
 BOARD := qemu
-SBI ?= rustsbi
+# SBI ?= rustsbi
+SBI ?= opensbi
 BOOTLOADER := ../bootloader/$(SBI)-$(BOARD).bin
 
 # GUI
