@@ -1,25 +1,6 @@
-                                                                                                  
-                                                                                                  
-                            CCCCCCCCCCCCC                                                         
-                         CCC::::::::::::C                                                         
-                       CC:::::::::::::::C                                                         
-                      C:::::CCCCCCCC::::C                                                         
-rrrrr   rrrrrrrrr    C:::::C       CCCCCC   ooooooooooo   rrrrr   rrrrrrrrr       eeeeeeeeeeee    
-r::::rrr:::::::::r  C:::::C               oo:::::::::::oo r::::rrr:::::::::r    ee::::::::::::ee  
-r:::::::::::::::::r C:::::C              o:::::::::::::::or:::::::::::::::::r  e::::::eeeee:::::ee
-rr::::::rrrrr::::::rC:::::C              o:::::ooooo:::::orr::::::rrrrr::::::re::::::e     e:::::e
- r:::::r     r:::::rC:::::C              o::::o     o::::o r:::::r     r:::::re:::::::eeeee::::::e
- r:::::r     rrrrrrrC:::::C              o::::o     o::::o r:::::r     rrrrrrre:::::::::::::::::e 
- r:::::r            C:::::C              o::::o     o::::o r:::::r            e::::::eeeeeeeeeee  
- r:::::r             C:::::C       CCCCCCo::::o     o::::o r:::::r            e:::::::e           
- r:::::r              C:::::CCCCCCCC::::Co:::::ooooo:::::o r:::::r            e::::::::e          
- r:::::r               CC:::::::::::::::Co:::::::::::::::o r:::::r             e::::::::eeeeeeee  
- r:::::r                 CCC::::::::::::C oo:::::::::::oo  r:::::r              ee:::::::::::::e  
- rrrrrrr                    CCCCCCCCCCCCC   ooooooooooo    rrrrrrr                eeeeeeeeeeeeee  
-                                                                                                  
-                                                                                                  
-                                                                                                  
-                                                                                                  
-                                                                                                  
-                                                                                                  
-                                                                                                  
+       ___                 _____            _             _       _ 
+ _ __ / __\___  _ __ ___  /__   \_   _ _ __| |_ ___  _ __(_) __ _| |
+| '__/ /  / _ \| '__/ _ \   / /\/ | | | '__| __/ _ \| '__| |/ _` | |
+| | / /__| (_) | | |  __/  / /  | |_| | |  | || (_) | |  | | (_| | |
+|_| \____/\___/|_|  \___|  \/    \__,_|_|   \__\___/|_|  |_|\__,_|_|
+                                                                    
