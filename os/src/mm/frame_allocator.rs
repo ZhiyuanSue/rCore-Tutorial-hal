@@ -22,7 +22,7 @@ impl FrameTracker {
 
 impl Debug for FrameTracker {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        f.write_fmt(format_args!("FrameTracker:PPN={:#x}", self.ppn as usize))
+        f.write_fmt(format_args!("FrameTracker:PPN={:#x}", usize::from(self.ppn)))
     }
 }
 

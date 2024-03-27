@@ -78,7 +78,9 @@ impl PageTable {
         let mut ppn = self.root_ppn;
         let mut result: Option<&mut PageTableEntry> = None;
         for (i, idx) in idxs.iter().enumerate() {
-            let pte = &mut ppn.get_pte_array()[*idx];
+			let pa: PhysAddr = ppn.into();
+			let pte =&mut  unsafe { core::slice::from_raw_parts_mut(usize::from(pa) as *mut PageTableEntry, 512) }[*idx];
+            // let pte = &mut ppn.get_pte_array()[*idx];
             if i == 2 {
                 result = Some(pte);
                 break;
@@ -97,7 +99,9 @@ impl PageTable {
         let mut ppn = self.root_ppn;
         let mut result: Option<&mut PageTableEntry> = None;
         for (i, idx) in idxs.iter().enumerate() {
-            let pte = &mut ppn.get_pte_array()[*idx];
+			let pa: PhysAddr = ppn.into();
+			let pte =&mut unsafe { core::slice::from_raw_parts_mut(usize::from(pa) as *mut PageTableEntry, 512) }[*idx];
+            // let pte = &mut ppn.get_pte_array()[*idx];
             if i == 2 {
                 result = Some(pte);
                 break;

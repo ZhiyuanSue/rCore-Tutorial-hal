@@ -282,7 +282,7 @@ impl MapArea {
         let ppn: PhysPage;
         match self.map_type {
             MapType::Identical => {
-                ppn = PhysPage::from_addr(vpn as usize);
+                ppn = PhysPage::from_addr(usize::from(vpn));
             }
             MapType::Framed => {
                 let frame = frame_alloc().unwrap();
@@ -291,8 +291,8 @@ impl MapArea {
             }
             MapType::Linear(pn_offset) => {
                 // check for sv39
-                assert!((vpn as usize) < (1usize << 27));
-                ppn = PhysPage::from_addr((vpn as usize as isize + pn_offset) as usize);
+                assert!((usize::from(vpn)) < (1usize << 27));
+                ppn = PhysPage::from_addr((usize::from(vpn) as isize + pn_offset) as usize);
             }
         }
         let pte_flags = PTEFlags::from_bits(self.map_perm.bits).unwrap();

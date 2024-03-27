@@ -12,7 +12,7 @@ pub fn sys_framebuffer() -> isize {
     assert!(fb_start_pa.aligned());
     let fb_start_ppn = fb_start_pa.floor();
     let fb_start_vpn = VirtAddr::from(FB_VADDR).floor();
-    let pn_offset = fb_start_ppn.0 as isize - fb_start_vpn.0 as isize;
+    let pn_offset = usize::from(fb_start_ppn) as isize - usize::from(fb_start_vpn) as isize;
 
     let current_process = current_process();
     let mut inner = current_process.inner_exclusive_access();

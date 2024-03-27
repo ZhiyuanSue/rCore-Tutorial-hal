@@ -1,12 +1,9 @@
-mod address;
 mod frame_allocator;
 mod heap_allocator;
 mod memory_set;
 mod page_table;
 
-pub use address::VPNRange;
-pub use address::{StepByOne};
-pub use arch::{PhysAddr,PhysPage,VirtAddr,VirtPage};
+pub use arch::{VPNRange,StepByOne,PhysAddr,PhysPage,VirtAddr,VirtPage};
 pub use frame_allocator::{frame_alloc, frame_alloc_more, frame_dealloc, FrameTracker};
 pub use memory_set::{kernel_token, MapArea, MapPermission, MapType, MemorySet, KERNEL_SPACE};
 use page_table::PTEFlags;
