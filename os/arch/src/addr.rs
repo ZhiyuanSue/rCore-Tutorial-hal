@@ -45,6 +45,22 @@ impl PhysAddr {
     pub fn get_cstr(&self) -> &CStr {
         unsafe { CStr::from_ptr(self.get_ptr::<i8>()) }
     }
+    pub fn floor(&self) -> PhysPage {
+        PhysPage(self.0 / PAGE_SIZE)
+    }
+    pub fn ceil(&self) -> PhysPage {
+        if self.0 == 0 {
+            PhysPage(0)
+        } else {
+            PhysPage((self.0 - 1 + PAGE_SIZE) / PAGE_SIZE)
+        }
+    }
+    pub fn page_offset(&self) -> usize {
+        self.0 & (PAGE_SIZE - 1)
+    }
+    pub fn aligned(&self) -> bool {
+        self.page_offset() == 0
+    }
 }
 
 #[derive(Copy, Clone, Ord, PartialOrd, Eq, PartialEq)]
@@ -118,6 +134,22 @@ impl VirtAddr {
     #[inline]
     pub fn get_cstr(&self) -> &CStr {
         unsafe { CStr::from_ptr(self.get_ptr::<i8>()) }
+    }
+	pub fn floor(&self) -> VirtPage {
+        VirtPage(self.0 / PAGE_SIZE)
+    }
+    pub fn ceil(&self) -> VirtPage {
+        if self.0 == 0 {
+            VirtPage(0)
+        } else {
+            VirtPage((self.0 - 1 + PAGE_SIZE) / PAGE_SIZE)
+        }
+    }
+    pub fn page_offset(&self) -> usize {
+        self.0 & (PAGE_SIZE - 1)
+    }
+    pub fn aligned(&self) -> bool {
+        self.page_offset() == 0
     }
 }
 
@@ -311,5 +343,23 @@ impl Debug for VirtPage {
 impl Debug for VirtAddr {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         f.write_fmt(format_args!("{:#x}", self.0))
+    }
+}
+impl PhysAddr {
+    pub fn get_ref<T>(&self) -> &'static T {
+        unsafe { (self.0 as *const T).as_ref().unwrap() }
+    }
+    pub fn get_mut<T>(&self) -> &'static mut T {
+        unsafe { (self.0 as *mut T).as_mut().unwrap() }
+    }
+}
+impl PhysPage {
+    pub fn get_bytes_array(&self) -> &'static mut [u8] {
+        let pa: PhysAddr = (*self).into();
+        unsafe { core::slice::from_raw_parts_mut(pa.0 as *mut u8, 4096) }
+    }
+    pub fn get_mut<T>(&self) -> &'static mut T {
+        let pa: PhysAddr = (*self).into();
+        pa.get_mut()
     }
 }

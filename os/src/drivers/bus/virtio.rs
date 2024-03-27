@@ -1,5 +1,5 @@
 use crate::mm::{
-    frame_alloc_more, frame_dealloc, kernel_token, FrameTracker, PageTable, PhysAddr, PhysPageNum,
+    frame_alloc_more, frame_dealloc, kernel_token, FrameTracker, PageTable, PhysAddr, PhysPage,
     StepByOne, VirtAddr,
 };
 use crate::sync::UPIntrFreeCell;
@@ -22,12 +22,12 @@ impl Hal for VirtioHal {
             .exclusive_access()
             .append(&mut trakcers.unwrap());
         let pa: PhysAddr = ppn_base.into();
-        pa.0
+        usize::from(pa)
     }
 
     fn dma_dealloc(pa: usize, pages: usize) -> i32 {
         let pa = PhysAddr::from(pa);
-        let mut ppn_base: PhysPageNum = pa.into();
+        let mut ppn_base: PhysPage = pa.into();
         for _ in 0..pages {
             frame_dealloc(ppn_base);
             ppn_base.step();

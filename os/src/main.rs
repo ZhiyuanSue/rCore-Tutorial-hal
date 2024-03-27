@@ -86,7 +86,7 @@ impl ArchInterface for ArchInterfaceImpl {
 	}
 	fn frame_alloc_persist() -> PhysPage
 	{
-		mm::frame_alloc()
+		PhysPage::from_addr(0)
 	}
 	fn frame_unalloc(ppn: PhysPage)
 	{

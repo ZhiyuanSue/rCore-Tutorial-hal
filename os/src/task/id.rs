@@ -1,6 +1,6 @@
 use super::ProcessControlBlock;
 use crate::config::{KERNEL_STACK_SIZE, PAGE_SIZE, TRAMPOLINE, TRAP_CONTEXT_BASE, USER_STACK_SIZE};
-use crate::mm::{MapPermission, PhysPageNum, VirtAddr, KERNEL_SPACE};
+use crate::mm::{MapPermission, PhysPage, VirtAddr, KERNEL_SPACE};
 use crate::sync::UPIntrFreeCell;
 use alloc::{
     sync::{Arc, Weak},
@@ -199,7 +199,7 @@ impl TaskUserRes {
         trap_cx_bottom_from_tid(self.tid)
     }
 
-    pub fn trap_cx_ppn(&self) -> PhysPageNum {
+    pub fn trap_cx_ppn(&self) -> PhysPage {
         let process = self.process.upgrade().unwrap();
         let process_inner = process.inner_exclusive_access();
         let trap_cx_bottom_va: VirtAddr = trap_cx_bottom_from_tid(self.tid).into();

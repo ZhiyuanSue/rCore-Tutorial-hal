@@ -47,8 +47,8 @@ pub struct StackFrameAllocator {
 
 impl StackFrameAllocator {
     pub fn init(&mut self, l: PhysPage, r: PhysPage) {
-        self.current = l as usize;
-        self.end = r as usize;
+        self.current = usize::from(l);
+        self.end = usize::from(r);
         // println!("last {} Physical Frames.", self.end - self.current);
     }
 }
@@ -81,7 +81,7 @@ impl FrameAllocator for StackFrameAllocator {
         }
     }
     fn dealloc(&mut self, ppn: PhysPage) {
-        let ppn = ppn as usize;
+        let ppn = usize::from(ppn);
         // validity check
         if ppn >= self.current || self.recycled.iter().any(|&v| v == ppn) {
             panic!("Frame ppn={:#x} has not been allocated!", ppn);
