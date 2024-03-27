@@ -27,7 +27,6 @@ mod fs;
 mod lang_items;
 mod mm;
 mod net;
-mod sbi;
 mod sync;
 mod syscall;
 mod task;

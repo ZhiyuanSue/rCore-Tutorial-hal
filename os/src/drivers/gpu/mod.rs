@@ -24,6 +24,7 @@ static BMP_DATA: &[u8] = include_bytes!("../../assert/mouse.bmp");
 impl VirtIOGpuWrapper {
     pub fn new() -> Self {
         unsafe {
+			// arch::shutdown();
             let mut virtio =
                 VirtIOGpu::<VirtioHal>::new(&mut *(VIRTIO7 as *mut VirtIOHeader)).unwrap();
 
