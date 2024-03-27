@@ -40,7 +40,7 @@ impl Hal for VirtioHal {
     }
 
     fn virt_to_phys(vaddr: usize) -> usize {
-        usize::from(PageTable::from_token(kernel_token())
+        usize::from(PageTable::from_satp(kernel_token())
             .translate_va(VirtAddr::from(vaddr))
             .unwrap())
     }

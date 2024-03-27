@@ -207,7 +207,7 @@ impl TaskUserRes {
             .memory_set
             .translate(trap_cx_bottom_va.into())
             .unwrap()
-            .ppn()
+            .to_ppn()
     }
 
     pub fn ustack_base(&self) -> usize {

@@ -185,6 +185,11 @@ impl PageTable {
     pub const fn get_satp(&self) -> usize {
         (8 << 60) | (self.0 .0 >> 12)
     }
+	#[inline]
+	pub fn from_satp(satp: usize) -> Self {
+        let root_ppn=PhysPage::from(satp & ((1usize << 44) - 1));
+		Self(PhysAddr::from(root_ppn))
+    }
 
     #[inline]
     pub fn change(&self) {
@@ -256,6 +261,36 @@ impl PageTable {
             paddr = pte.to_ppn().into()
         }
         Some(PhysAddr(paddr.0 | vaddr.0 % PAGE_SIZE))
+    }
+    fn find_pte(&self, vpn: VirtPage) -> Option<&mut PTE> {
+        let idxs = vpn.indexes();
+        let mut ppn = self.0;
+        let mut result: Option<&mut PTE> = None;
+        for (i, idx) in idxs.iter().enumerate() {
+			let pa: PhysAddr = ppn.into();
+			let pte =&mut unsafe { core::slice::from_raw_parts_mut(usize::from(pa) as *mut PTE, 512) }[*idx];
+            // let pte = &mut ppn.get_pte_array()[*idx];
+            if i == 2 {
+                result = Some(pte);
+                break;
+            }
+            if !pte.is_valid() {
+                return None;
+            }
+            ppn = PhysAddr::from(pte.to_ppn());
+        }
+        result
+    }
+	pub fn translate(&self, vpn: VirtPage) -> Option<PTE> {
+        self.find_pte(vpn).map(|pte| *pte)
+    }
+    pub fn translate_va(&self, va: VirtAddr) -> Option<PhysAddr> {
+        self.find_pte(va.clone().floor()).map(|pte| {
+            let aligned_pa: PhysAddr = pte.to_ppn().into();
+            let offset = va.page_offset();
+            let aligned_pa_usize: usize = aligned_pa.into();
+            (aligned_pa_usize + offset).into()
+        })
     }
 }
 

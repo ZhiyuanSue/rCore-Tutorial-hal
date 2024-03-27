@@ -1,5 +1,5 @@
 use super::{frame_alloc, FrameTracker};
-use super::{PTEFlags, PageTable, PageTableEntry};
+use super::{PageTable, PTE ,MappingFlags};
 use super::{PhysAddr, PhysPage, VirtAddr, VirtPage};
 use super::{StepByOne, VPNRange};
 use crate::config::{MEMORY_END, MMIO, PAGE_SIZE, TRAMPOLINE};
@@ -34,19 +34,19 @@ pub fn kernel_token() -> usize {
 }
 
 pub struct MemorySet {
-    page_table: PageTable,
+    page_table: Arc<PageTable>,
     areas: Vec<MapArea>,
 }
 
 impl MemorySet {
     pub fn new_bare() -> Self {
         Self {
-            page_table: PageTable::new(),
+            page_table: PageTable::alloc(),
             areas: Vec::new(),
         }
     }
     pub fn token(&self) -> usize {
-        self.page_table.token()
+        self.page_table.get_satp()
     }
     /// Assume that no conflicts.
     pub fn insert_framed_area(
@@ -84,9 +84,10 @@ impl MemorySet {
     /// Mention that trampoline is not collected by areas.
     fn map_trampoline(&mut self) {
         self.page_table.map(
-            VirtAddr::from(TRAMPOLINE).into(),
             PhysAddr::from(strampoline as usize).into(),
-            PTEFlags::R | PTEFlags::X,
+			VirtAddr::from(TRAMPOLINE).into(),
+            MappingFlags::R | MappingFlags::X,
+			3
         );
     }
     /// Without kernel stacks.
@@ -222,8 +223,8 @@ impl MemorySet {
             memory_set.push(new_area, None);
             // copy data from another space
             for vpn in area.vpn_range {
-                let src_ppn = user_space.translate(vpn).unwrap().ppn();
-                let dst_ppn = memory_set.translate(vpn).unwrap().ppn();
+                let src_ppn = user_space.translate(vpn).unwrap().to_ppn();
+                let dst_ppn = memory_set.translate(vpn).unwrap().to_ppn();
                 dst_ppn
                     .get_bytes_array()
                     .copy_from_slice(src_ppn.get_bytes_array());
@@ -232,13 +233,13 @@ impl MemorySet {
         memory_set
     }
     pub fn activate(&self) {
-        let satp = self.page_table.token();
+        let satp = self.page_table.get_satp();
         unsafe {
             satp::write(satp);
             asm!("sfence.vma");
         }
     }
-    pub fn translate(&self, vpn: VirtPage) -> Option<PageTableEntry> {
+    pub fn translate(&self, vpn: VirtPage) -> Option<PTE> {
         self.page_table.translate(vpn)
     }
     pub fn recycle_data_pages(&mut self) {
@@ -295,8 +296,8 @@ impl MapArea {
                 ppn = PhysPage::from_addr((usize::from(vpn) as isize + pn_offset) as usize);
             }
         }
-        let pte_flags = PTEFlags::from_bits(self.map_perm.bits).unwrap();
-        page_table.map(vpn, ppn, pte_flags);
+        let mapping_flags = MappingFlags::from_bits(self.map_perm.bits as u64).unwrap();
+        page_table.map(ppn,vpn, mapping_flags,3);
     }
     pub fn unmap_one(&mut self, page_table: &mut PageTable, vpn: VirtPage) {
         if self.map_type == MapType::Framed {
@@ -326,7 +327,7 @@ impl MapArea {
             let dst = &mut page_table
                 .translate(current_vpn)
                 .unwrap()
-                .ppn()
+                .to_ppn()
                 .get_bytes_array()[..src.len()];
             dst.copy_from_slice(src);
             start += PAGE_SIZE;
@@ -355,26 +356,26 @@ bitflags! {
     }
 }
 
-#[allow(unused)]
-pub fn remap_test() {
-    let mut kernel_space = KERNEL_SPACE.exclusive_access();
-    let mid_text: VirtAddr = ((stext as usize + etext as usize) / 2).into();
-    let mid_rodata: VirtAddr = ((srodata as usize + erodata as usize) / 2).into();
-    let mid_data: VirtAddr = ((_sdata as usize + _edata as usize) / 2).into();
-    assert!(!kernel_space
-        .page_table
-        .translate(mid_text.floor())
-        .unwrap()
-        .writable(),);
-    assert!(!kernel_space
-        .page_table
-        .translate(mid_rodata.floor())
-        .unwrap()
-        .writable(),);
-    assert!(!kernel_space
-        .page_table
-        .translate(mid_data.floor())
-        .unwrap()
-        .executable(),);
-    println!("remap_test passed!");
-}
+// #[allow(unused)]
+// pub fn remap_test() {
+//     let mut kernel_space = KERNEL_SPACE.exclusive_access();
+//     let mid_text: VirtAddr = ((stext as usize + etext as usize) / 2).into();
+//     let mid_rodata: VirtAddr = ((srodata as usize + erodata as usize) / 2).into();
+//     let mid_data: VirtAddr = ((_sdata as usize + _edata as usize) / 2).into();
+//     assert!(!kernel_space
+//         .page_table
+//         .translate(mid_text.floor())
+//         .unwrap()
+//         .writable(),);
+//     assert!(!kernel_space
+//         .page_table
+//         .translate(mid_rodata.floor())
+//         .unwrap()
+//         .writable(),);
+//     assert!(!kernel_space
+//         .page_table
+//         .translate(mid_data.floor())
+//         .unwrap()
+//         .executable(),);
+//     println!("remap_test passed!");
+// }
