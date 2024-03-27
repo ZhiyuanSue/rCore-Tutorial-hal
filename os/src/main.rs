@@ -37,7 +37,6 @@ mod trap;
 use crate::drivers::chardev::CharDevice;
 use crate::drivers::chardev::UART;
 
-
 use lazy_static::*;
 use sync::UPIntrFreeCell;
 
@@ -58,7 +57,10 @@ impl ArchInterface for ArchInterfaceImpl {
     }
 	fn kernel_interrupt(ctx: &mut Context, trap_type: TrapType)
 	{
-
+		println!("[kernel] kernel interrupt");
+		trap::init();
+		trap::enable_timer_interrupt();
+		timer::set_next_trigger();
 	}
 	fn add_memory_region(start: usize, end: usize)
 	{
@@ -67,17 +69,11 @@ impl ArchInterface for ArchInterfaceImpl {
 	fn main(hartid: usize)
 	{
 		println!("[kernel] main start");
-		println!("KERN: init gpu");
-		let _gpu = GPU_DEVICE.clone();
-		println!("KERN: init keyboard");
-		let _keyboard = KEYBOARD_DEVICE.clone();
-		println!("KERN: init mouse");
-		let _mouse = MOUSE_DEVICE.clone();
-		println!("KERN: init trap");
-		trap::init();
-		trap::enable_timer_interrupt();
-		timer::set_next_trigger();
-		board::device_init();
+		
+		// trap::init();
+		// trap::enable_timer_interrupt();
+		// timer::set_next_trigger();
+		// board::device_init();
 		fs::list_apps();
 		task::add_initproc();
 		*DEV_NON_BLOCKING_ACCESS.exclusive_access() = true;
@@ -86,18 +82,26 @@ impl ArchInterface for ArchInterfaceImpl {
 	}
 	fn frame_alloc_persist() -> PhysPage
 	{
-		PhysPage::from_addr(0)
+		mm::frame_alloc().unwrap().ppn
 	}
 	fn frame_unalloc(ppn: PhysPage)
 	{
-		
+		mm::frame_dealloc(ppn)
 	}
 	fn prepare_drivers()
 	{
 		println!("[kernel] prepare drivers");
+		board::device_init();
 	}
 	fn try_to_add_device(fdtNode: &FdtNode)
 	{
-		println!("[kernel] try to add device")
+		println!("[kernel] try to add device");
+		println!("KERN: init gpu");
+		let _gpu = GPU_DEVICE.clone();
+		println!("KERN: init keyboard");
+		let _keyboard = KEYBOARD_DEVICE.clone();
+		println!("KERN: init mouse");
+		let _mouse = MOUSE_DEVICE.clone();
+		println!("KERN: init trap");
 	}
 }
