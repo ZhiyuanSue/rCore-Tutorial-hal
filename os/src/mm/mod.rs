@@ -15,6 +15,7 @@ pub use page_table::{
 };
 
 pub fn init() {
+	allocator::init();
     frame_allocator::init_frame_allocator();
     KERNEL_SPACE.exclusive_access().activate();
 }

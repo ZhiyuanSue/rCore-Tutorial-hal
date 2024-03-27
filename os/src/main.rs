@@ -50,9 +50,8 @@ struct ArchInterfaceImpl;
 #[crate_interface::impl_interface]
 impl ArchInterface for ArchInterfaceImpl {
 	fn init_logging() {
-		shutdown();
+		mm::init();
 		UART.init();
-		shutdown();
         let str = include_str!("logo.txt");
         println!("{}", str);
     }

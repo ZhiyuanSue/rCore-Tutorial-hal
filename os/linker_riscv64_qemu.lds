@@ -51,6 +51,7 @@ SECTIONS
     .bss ALIGN(4K): {
         *(.bss.stack)
         _sbss = .;
+		*(.bss.heap)
         *(.bss .bss.*)
         *(.sbss .sbss.*)
         _ebss = .;

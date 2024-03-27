@@ -16,6 +16,7 @@ fn panic(info: &PanicInfo) -> ! {
     } else {
         error!("[kernel] Panicked: {}", info.message().unwrap());
     }
+	println!("[kernel] get a panic");
     unsafe {
         backtrace();
     }
@@ -25,6 +26,7 @@ fn panic(info: &PanicInfo) -> ! {
 unsafe fn backtrace() {
     let mut fp: usize;
     let stop = current_kstack_top();
+	println!("stop is {}",stop);
     asm!("mv {}, s0", out(reg) fp);
     println!("---START BACKTRACE---");
     for i in 0..10 {
