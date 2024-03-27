@@ -86,11 +86,11 @@ impl ArchInterface for ArchInterfaceImpl {
 	}
 	fn frame_alloc_persist() -> PhysPage
 	{
-		PhysPage::new(0)
+		mm::frame_alloc()
 	}
 	fn frame_unalloc(ppn: PhysPage)
 	{
-
+		
 	}
 	fn prepare_drivers()
 	{

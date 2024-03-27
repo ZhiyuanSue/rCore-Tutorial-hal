@@ -1,6 +1,6 @@
 use super::{frame_alloc, FrameTracker};
 use super::{PTEFlags, PageTable, PageTableEntry};
-use super::{PhysAddr, PhysPageNum, VirtAddr, VirtPageNum};
+use super::{PhysAddr, PhysPage, VirtAddr, VirtPage};
 use super::{StepByOne, VPNRange};
 use crate::config::{MEMORY_END, MMIO, PAGE_SIZE, TRAMPOLINE};
 use crate::sync::UPIntrFreeCell;
@@ -60,7 +60,7 @@ impl MemorySet {
             None,
         );
     }
-    pub fn remove_area_with_start_vpn(&mut self, start_vpn: VirtPageNum) {
+    pub fn remove_area_with_start_vpn(&mut self, start_vpn: VirtPage) {
         if let Some((idx, area)) = self
             .areas
             .iter_mut()
@@ -178,7 +178,7 @@ impl MemorySet {
         let magic = elf_header.pt1.magic;
         assert_eq!(magic, [0x7f, 0x45, 0x4c, 0x46], "invalid elf!");
         let ph_count = elf_header.pt2.ph_count();
-        let mut max_end_vpn = VirtPageNum(0);
+        let mut max_end_vpn = VirtPage::from_addr(0);
         for i in 0..ph_count {
             let ph = elf.program_header(i).unwrap();
             if ph.get_type().unwrap() == xmas_elf::program::Type::Load {
@@ -238,7 +238,7 @@ impl MemorySet {
             asm!("sfence.vma");
         }
     }
-    pub fn translate(&self, vpn: VirtPageNum) -> Option<PageTableEntry> {
+    pub fn translate(&self, vpn: VirtPage) -> Option<PageTableEntry> {
         self.page_table.translate(vpn)
     }
     pub fn recycle_data_pages(&mut self) {
@@ -249,7 +249,7 @@ impl MemorySet {
 
 pub struct MapArea {
     vpn_range: VPNRange,
-    data_frames: BTreeMap<VirtPageNum, FrameTracker>,
+    data_frames: BTreeMap<VirtPage, FrameTracker>,
     map_type: MapType,
     map_perm: MapPermission,
 }
@@ -261,8 +261,8 @@ impl MapArea {
         map_type: MapType,
         map_perm: MapPermission,
     ) -> Self {
-        let start_vpn: VirtPageNum = start_va.floor();
-        let end_vpn: VirtPageNum = end_va.ceil();
+        let start_vpn: VirtPage = start_va.floor();
+        let end_vpn: VirtPage = end_va.ceil();
         Self {
             vpn_range: VPNRange::new(start_vpn, end_vpn),
             data_frames: BTreeMap::new(),
@@ -278,11 +278,11 @@ impl MapArea {
             map_perm: another.map_perm,
         }
     }
-    pub fn map_one(&mut self, page_table: &mut PageTable, vpn: VirtPageNum) {
-        let ppn: PhysPageNum;
+    pub fn map_one(&mut self, page_table: &mut PageTable, vpn: VirtPage) {
+        let ppn: PhysPage;
         match self.map_type {
             MapType::Identical => {
-                ppn = PhysPageNum(vpn.0);
+                ppn = PhysPage::from_addr(vpn as usize);
             }
             MapType::Framed => {
                 let frame = frame_alloc().unwrap();
@@ -291,14 +291,14 @@ impl MapArea {
             }
             MapType::Linear(pn_offset) => {
                 // check for sv39
-                assert!(vpn.0 < (1usize << 27));
-                ppn = PhysPageNum((vpn.0 as isize + pn_offset) as usize);
+                assert!((vpn as usize) < (1usize << 27));
+                ppn = PhysPage::from_addr((vpn as usize as isize + pn_offset) as usize);
             }
         }
         let pte_flags = PTEFlags::from_bits(self.map_perm.bits).unwrap();
         page_table.map(vpn, ppn, pte_flags);
     }
-    pub fn unmap_one(&mut self, page_table: &mut PageTable, vpn: VirtPageNum) {
+    pub fn unmap_one(&mut self, page_table: &mut PageTable, vpn: VirtPage) {
         if self.map_type == MapType::Framed {
             self.data_frames.remove(&vpn);
         }

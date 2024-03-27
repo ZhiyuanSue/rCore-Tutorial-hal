@@ -1,4 +1,4 @@
-use super::{PhysAddr, PhysPageNum};
+use super::{PhysAddr, PhysPage};
 use crate::config::MEMORY_END;
 use crate::sync::UPIntrFreeCell;
 use alloc::vec::Vec;
@@ -6,11 +6,11 @@ use core::fmt::{self, Debug, Formatter};
 use lazy_static::*;
 
 pub struct FrameTracker {
-    pub ppn: PhysPageNum,
+    pub ppn: PhysPage,
 }
 
 impl FrameTracker {
-    pub fn new(ppn: PhysPageNum) -> Self {
+    pub fn new(ppn: PhysPage) -> Self {
         // page cleaning
         let bytes_array = ppn.get_bytes_array();
         for i in bytes_array {
@@ -22,7 +22,7 @@ impl FrameTracker {
 
 impl Debug for FrameTracker {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        f.write_fmt(format_args!("FrameTracker:PPN={:#x}", self.ppn.0))
+        f.write_fmt(format_args!("FrameTracker:PPN={:#x}", self.ppn as usize))
     }
 }
 
@@ -34,9 +34,9 @@ impl Drop for FrameTracker {
 
 trait FrameAllocator {
     fn new() -> Self;
-    fn alloc(&mut self) -> Option<PhysPageNum>;
-    fn alloc_more(&mut self, pages: usize) -> Option<Vec<PhysPageNum>>;
-    fn dealloc(&mut self, ppn: PhysPageNum);
+    fn alloc(&mut self) -> Option<PhysPage>;
+    fn alloc_more(&mut self, pages: usize) -> Option<Vec<PhysPage>>;
+    fn dealloc(&mut self, ppn: PhysPage);
 }
 
 pub struct StackFrameAllocator {
@@ -46,9 +46,9 @@ pub struct StackFrameAllocator {
 }
 
 impl StackFrameAllocator {
-    pub fn init(&mut self, l: PhysPageNum, r: PhysPageNum) {
-        self.current = l.0;
-        self.end = r.0;
+    pub fn init(&mut self, l: PhysPage, r: PhysPage) {
+        self.current = l as usize;
+        self.end = r as usize;
         // println!("last {} Physical Frames.", self.end - self.current);
     }
 }
@@ -60,7 +60,7 @@ impl FrameAllocator for StackFrameAllocator {
             recycled: Vec::new(),
         }
     }
-    fn alloc(&mut self) -> Option<PhysPageNum> {
+    fn alloc(&mut self) -> Option<PhysPage> {
         if let Some(ppn) = self.recycled.pop() {
             Some(ppn.into())
         } else if self.current == self.end {
@@ -70,7 +70,7 @@ impl FrameAllocator for StackFrameAllocator {
             Some((self.current - 1).into())
         }
     }
-    fn alloc_more(&mut self, pages: usize) -> Option<Vec<PhysPageNum>> {
+    fn alloc_more(&mut self, pages: usize) -> Option<Vec<PhysPage>> {
         if self.current + pages >= self.end {
             None
         } else {
@@ -80,8 +80,8 @@ impl FrameAllocator for StackFrameAllocator {
             Some(v)
         }
     }
-    fn dealloc(&mut self, ppn: PhysPageNum) {
-        let ppn = ppn.0;
+    fn dealloc(&mut self, ppn: PhysPage) {
+        let ppn = ppn as usize;
         // validity check
         if ppn >= self.current || self.recycled.iter().any(|&v| v == ppn) {
             panic!("Frame ppn={:#x} has not been allocated!", ppn);
@@ -122,7 +122,7 @@ pub fn frame_alloc_more(num: usize) -> Option<Vec<FrameTracker>> {
         .map(|x| x.iter().map(|&t| FrameTracker::new(t)).collect())
 }
 
-pub fn frame_dealloc(ppn: PhysPageNum) {
+pub fn frame_dealloc(ppn: PhysPage) {
     FRAME_ALLOCATOR.exclusive_access().dealloc(ppn);
 }
 

@@ -1,4 +1,4 @@
-use super::{frame_alloc, FrameTracker, PhysAddr, PhysPageNum, StepByOne, VirtAddr, VirtPageNum};
+use super::{frame_alloc, FrameTracker, PhysAddr, PhysPage, StepByOne, VirtAddr, VirtPage};
 use alloc::string::String;
 use alloc::vec;
 use alloc::vec::Vec;
@@ -24,15 +24,15 @@ pub struct PageTableEntry {
 }
 
 impl PageTableEntry {
-    pub fn new(ppn: PhysPageNum, flags: PTEFlags) -> Self {
+    pub fn new(ppn: PhysPage, flags: PTEFlags) -> Self {
         PageTableEntry {
-            bits: ppn.0 << 10 | flags.bits as usize,
+            bits: (ppn as usize) << 10 | flags.bits as usize,
         }
     }
     pub fn empty() -> Self {
         PageTableEntry { bits: 0 }
     }
-    pub fn ppn(&self) -> PhysPageNum {
+    pub fn ppn(&self) -> PhysPage {
         (self.bits >> 10 & ((1usize << 44) - 1)).into()
     }
     pub fn flags(&self) -> PTEFlags {
@@ -53,7 +53,7 @@ impl PageTableEntry {
 }
 
 pub struct PageTable {
-    root_ppn: PhysPageNum,
+    root_ppn: PhysPage,
     frames: Vec<FrameTracker>,
 }
 
@@ -69,11 +69,11 @@ impl PageTable {
     /// Temporarily used to get arguments from user space.
     pub fn from_token(satp: usize) -> Self {
         Self {
-            root_ppn: PhysPageNum::from(satp & ((1usize << 44) - 1)),
+            root_ppn: PhysPage::from(satp & ((1usize << 44) - 1)),
             frames: Vec::new(),
         }
     }
-    fn find_pte_create(&mut self, vpn: VirtPageNum) -> Option<&mut PageTableEntry> {
+    fn find_pte_create(&mut self, vpn: VirtPage) -> Option<&mut PageTableEntry> {
         let idxs = vpn.indexes();
         let mut ppn = self.root_ppn;
         let mut result: Option<&mut PageTableEntry> = None;
@@ -92,7 +92,7 @@ impl PageTable {
         }
         result
     }
-    fn find_pte(&self, vpn: VirtPageNum) -> Option<&mut PageTableEntry> {
+    fn find_pte(&self, vpn: VirtPage) -> Option<&mut PageTableEntry> {
         let idxs = vpn.indexes();
         let mut ppn = self.root_ppn;
         let mut result: Option<&mut PageTableEntry> = None;
@@ -110,18 +110,18 @@ impl PageTable {
         result
     }
     #[allow(unused)]
-    pub fn map(&mut self, vpn: VirtPageNum, ppn: PhysPageNum, flags: PTEFlags) {
+    pub fn map(&mut self, vpn: VirtPage, ppn: PhysPage, flags: PTEFlags) {
         let pte = self.find_pte_create(vpn).unwrap();
         assert!(!pte.is_valid(), "vpn {:?} is mapped before mapping", vpn);
         *pte = PageTableEntry::new(ppn, flags | PTEFlags::V);
     }
     #[allow(unused)]
-    pub fn unmap(&mut self, vpn: VirtPageNum) {
+    pub fn unmap(&mut self, vpn: VirtPage) {
         let pte = self.find_pte(vpn).unwrap();
         assert!(pte.is_valid(), "vpn {:?} is invalid before unmapping", vpn);
         *pte = PageTableEntry::empty();
     }
-    pub fn translate(&self, vpn: VirtPageNum) -> Option<PageTableEntry> {
+    pub fn translate(&self, vpn: VirtPage) -> Option<PageTableEntry> {
         self.find_pte(vpn).map(|pte| *pte)
     }
     pub fn translate_va(&self, va: VirtAddr) -> Option<PhysAddr> {
@@ -133,7 +133,7 @@ impl PageTable {
         })
     }
     pub fn token(&self) -> usize {
-        8usize << 60 | self.root_ppn.0
+        8usize << 60 | (self.root_ppn as usize)
     }
 }
 

@@ -2,7 +2,7 @@ use super::id::TaskUserRes;
 use super::{kstack_alloc, KernelStack, ProcessControlBlock, TaskContext};
 use crate::trap::TrapContext;
 use crate::{
-    mm::PhysPageNum,
+    mm::PhysPage,
     sync::{UPIntrFreeCell, UPIntrRefMut},
 };
 use alloc::sync::{Arc, Weak};
@@ -29,7 +29,7 @@ impl TaskControlBlock {
 
 pub struct TaskControlBlockInner {
     pub res: Option<TaskUserRes>,
-    pub trap_cx_ppn: PhysPageNum,
+    pub trap_cx_ppn: PhysPage,
     pub task_cx: TaskContext,
     pub task_status: TaskStatus,
     pub exit_code: Option<i32>,
