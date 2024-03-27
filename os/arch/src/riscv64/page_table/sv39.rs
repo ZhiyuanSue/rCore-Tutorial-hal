@@ -163,11 +163,11 @@ pub fn get_pte_list(paddr: PhysAddr) -> &'static mut [PTE] {
 pub struct PageTable(pub(crate) PhysAddr);
 
 impl PageTable {
-    pub fn alloc() -> Arc<Self> {
+    pub fn alloc() -> Self {
         let addr = ArchInterface::frame_alloc_persist().into();
         let page_table = Self(addr);
         page_table.restore();
-        Arc::new(page_table)
+        page_table
     }
 
     #[inline]

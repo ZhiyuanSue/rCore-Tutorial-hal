@@ -34,7 +34,7 @@ pub fn kernel_token() -> usize {
 }
 
 pub struct MemorySet {
-    page_table: Arc<PageTable>,
+    page_table: PageTable,
     areas: Vec<MapArea>,
 }
 
