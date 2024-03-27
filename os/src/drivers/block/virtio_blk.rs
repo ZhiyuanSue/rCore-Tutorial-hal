@@ -7,7 +7,7 @@ use alloc::collections::BTreeMap;
 use virtio_drivers::{BlkResp, RespStatus, VirtIOBlk, VirtIOHeader};
 
 #[allow(unused)]
-const VIRTIO0: usize = 0x10008000;
+const VIRTIO0: usize = arch::VIRT_ADDR_START+0x10008000;
 
 pub struct VirtIOBlock {
     virtio_blk: UPIntrFreeCell<VirtIOBlk<'static, VirtioHal>>,

@@ -6,8 +6,8 @@ use alloc::sync::Arc;
 use core::any::Any;
 use virtio_drivers::{VirtIOHeader, VirtIOInput};
 
-const VIRTIO5: usize = 0x10005000;
-const VIRTIO6: usize = 0x10006000;
+const VIRTIO5: usize = arch::VIRT_ADDR_START+0x10005000;
+const VIRTIO6: usize = arch::VIRT_ADDR_START+0x10006000;
 
 struct VirtIOInputInner {
     virtio_input: VirtIOInput<'static, VirtioHal>,

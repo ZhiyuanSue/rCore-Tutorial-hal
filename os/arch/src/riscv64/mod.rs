@@ -26,9 +26,9 @@ use crate::ArchInterface;
 extern "C" fn rust_main(hartid: usize, device_tree: usize) {
 	
 	// crate::clear_bss();
+	// Init allocator
+	allocator::init();
     ArchInterface::init_logging();
-    // Init allocator
-    allocator::init();
 
     percpu::init(1);
     percpu::set_local_thread_pointer(hartid);

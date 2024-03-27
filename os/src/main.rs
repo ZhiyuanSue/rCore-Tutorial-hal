@@ -10,6 +10,7 @@ use arch::{
 	ArchInterface,Context,TrapType,PhysPage
 };
 use fdt::node::FdtNode;
+use log::info;
 extern crate alloc;
 
 #[macro_use]
@@ -50,10 +51,10 @@ struct ArchInterfaceImpl;
 #[crate_interface::impl_interface]
 impl ArchInterface for ArchInterfaceImpl {
 	fn init_logging() {
-		mm::init();
 		UART.init();
         let str = include_str!("logo.txt");
         println!("{}", str);
+		info!("hello, rCore turtorial");
     }
 	fn kernel_interrupt(ctx: &mut Context, trap_type: TrapType)
 	{
@@ -65,7 +66,7 @@ impl ArchInterface for ArchInterfaceImpl {
 	}
 	fn main(hartid: usize)
 	{
-		mm::init();
+		println!("[kernel] main start");
 		println!("KERN: init gpu");
 		let _gpu = GPU_DEVICE.clone();
 		println!("KERN: init keyboard");
@@ -93,10 +94,10 @@ impl ArchInterface for ArchInterfaceImpl {
 	}
 	fn prepare_drivers()
 	{
-
+		println!("[kernel] prepare drivers");
 	}
 	fn try_to_add_device(fdtNode: &FdtNode)
 	{
-
+		println!("[kernel] try to add device")
 	}
 }
