@@ -156,7 +156,6 @@ impl From<MappingFlags> for PTEFlags {
 
 #[inline]
 pub fn get_pte_list(paddr: PhysAddr) -> &'static mut [PTE] {
-	info!("get pte_list {}",paddr);
     unsafe { core::slice::from_raw_parts_mut(paddr.get_mut_ptr::<PTE>(), PAGE_ITEM_COUNT) }
 }
 
@@ -173,7 +172,6 @@ impl PageTable {
 
     #[inline]
     pub fn restore(&self) {
-		info!("go into restore");
         let arr = get_pte_list(self.0);
         arr[0x100] = PTE::from_addr(0x0000_0000, PTEFlags::ADGVRWX);
         arr[0x101] = PTE::from_addr(0x4000_0000, PTEFlags::ADGVRWX);
@@ -204,19 +202,18 @@ impl PageTable {
     #[inline]
     pub fn map(&self, ppn: PhysPage, vpn: VirtPage, flags: MappingFlags, level: usize) {
         // TODO: Add huge page support.
-		info!("go into map");
+		info!("go into page table map ppn {} vpn {:#x}",ppn,vpn.0);
         let mut pte_list = get_pte_list(self.0);
-        for i in (1..level).rev() {
-            let value = (vpn.0 >> 9 * i) & 0x1ff;
+        for i in (1..(level+1)).rev() {
+            let value = (vpn.0 >> (9 * (i-1))) & 0x1ff;
+			info!("i is {} value is {}",i,value);
             let pte = &mut pte_list[value];
             if i == 0 {
                 break;
             }
             if !pte.is_valid() {
                 *pte = PTE::from_ppn(ArchInterface::frame_alloc_persist().0, PTEFlags::V);
-				info!("*pte to ppn is {}",(*pte).to_ppn());
             }
-			info!("go into map for loop");
             // page_table = PageTable(pte.to_ppn().into());
             pte_list = get_pte_list(pte.to_ppn().into());
         }
@@ -270,7 +267,7 @@ impl PageTable {
         let idxs = vpn.indexes();
         let mut ppn = self.0;
         let mut result: Option<&mut PTE> = None;
-		info!("find_pte");
+		info!("find_pte vpn {}",vpn);
         for (i, idx) in idxs.iter().enumerate() {
 			let pa: PhysAddr = ppn.into();
 			info!("pa is {}, idx is {}",pa,idx);

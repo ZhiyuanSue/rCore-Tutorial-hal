@@ -10,7 +10,7 @@ use alloc::vec::Vec;
 use core::arch::asm;
 use lazy_static::*;
 use riscv::register::satp;
-use log::info;
+use log::{info,error};
 
 extern "C" {
     fn stext();
@@ -260,7 +260,7 @@ impl MemorySet {
 
 pub struct MapArea {
     vpn_range: VPNRange,
-    data_frames: BTreeMap<VirtPage, FrameTracker>,
+    data_frames: BTreeMap<VirtPage, PhysPage>,
     map_type: MapType,
     map_perm: MapPermission,
 }
@@ -291,27 +291,23 @@ impl MapArea {
     }
     pub fn map_one(&mut self, page_table: &mut PageTable, vpn: VirtPage) {
         let ppn: PhysPage;
-		info!("go into map one");
+		error!("go into map one");
         match self.map_type {
             MapType::Identical => {
-				info!("map type ident");
                 ppn = PhysPage::from_addr(usize::from(vpn));
             }
             MapType::Framed => {
-				info!("map type framed");
                 let frame = frame_alloc().unwrap();
-                ppn = frame.ppn;
-				info!("map insert {}",ppn);
+                ppn = frame;
                 self.data_frames.insert(vpn, frame);
             }
             MapType::Linear(pn_offset) => {
                 // check for sv39
-				info!("map type linear");
                 assert!((usize::from(vpn)) < (1usize << 27));
                 ppn = PhysPage::from_addr((usize::from(vpn) as isize + pn_offset) as usize);
             }
         }
-		info!("end map one match");
+		error!("end map one match");
         let mapping_flags = MappingFlags::from_bits(self.map_perm.bits as u64).unwrap();
         page_table.map(ppn,vpn, mapping_flags,3);
     }

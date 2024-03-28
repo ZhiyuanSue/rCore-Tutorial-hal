@@ -63,10 +63,13 @@ impl FrameAllocator for StackFrameAllocator {
     }
     fn alloc(&mut self) -> Option<PhysPage> {
         if let Some(ppn) = self.recycled.pop() {
+			error!("alloc 1");
             Some((ppn & (arch::VIRT_ADDR_START_MASK >> 12)).into())
         } else if self.current == self.end {
+			error!("alloc 2");
             None
         } else {
+			error!("alloc 3");
             self.current += 1;
             Some(((self.current - 1) & (arch::VIRT_ADDR_START_MASK >> 12)).into())
         }
@@ -82,6 +85,7 @@ impl FrameAllocator for StackFrameAllocator {
         }
     }
     fn dealloc(&mut self, ppn: PhysPage) {
+		error!("dealloc ppn {}",ppn);
         let ppn = usize::from(ppn) & ((arch::VIRT_ADDR_START_MASK) >> 12);
         // validity check
         if ppn >= self.current || self.recycled.iter().any(|&v| v == ppn) {
@@ -109,11 +113,12 @@ pub fn init_frame_allocator() {
     );
 }
 
-pub fn frame_alloc() -> Option<FrameTracker> {
+pub fn frame_alloc() -> Option<PhysPage> {
     FRAME_ALLOCATOR
         .exclusive_access()
         .alloc()
-        .map(FrameTracker::new)
+        // .map(FrameTracker::new)
+		/*here we need a page that will not auto free to satisify the hal level requirement*/
 }
 
 pub fn frame_alloc_more(num: usize) -> Option<Vec<FrameTracker>> {
@@ -127,37 +132,37 @@ pub fn frame_dealloc(ppn: PhysPage) {
     FRAME_ALLOCATOR.exclusive_access().dealloc(ppn);
 }
 
-#[allow(unused)]
-pub fn frame_allocator_test() {
-    let mut v: Vec<FrameTracker> = Vec::new();
-    for i in 0..5 {
-        let frame = frame_alloc().unwrap();
-        println!("{:?}", frame);
-        v.push(frame);
-    }
-    v.clear();
-    for i in 0..5 {
-        let frame = frame_alloc().unwrap();
-        println!("{:?}", frame);
-        v.push(frame);
-    }
-    drop(v);
-    println!("frame_allocator_test passed!");
-}
+// #[allow(unused)]
+// pub fn frame_allocator_test() {
+//     let mut v: Vec<FrameTracker> = Vec::new();
+//     for i in 0..5 {
+//         let frame = frame_alloc().unwrap();
+//         println!("{:?}", frame);
+//         v.push(frame);
+//     }
+//     v.clear();
+//     for i in 0..5 {
+//         let frame = frame_alloc().unwrap();
+//         println!("{:?}", frame);
+//         v.push(frame);
+//     }
+//     drop(v);
+//     println!("frame_allocator_test passed!");
+// }
 
-#[allow(unused)]
-pub fn frame_allocator_alloc_more_test() {
-    let mut v: Vec<FrameTracker> = Vec::new();
-    let frames = frame_alloc_more(5).unwrap();
-    for frame in &frames {
-        println!("{:?}", frame);
-    }
-    v.extend(frames);
-    v.clear();
-    let frames = frame_alloc_more(5).unwrap();
-    for frame in &frames {
-        println!("{:?}", frame);
-    }
-    drop(v);
-    println!("frame_allocator_test passed!");
-}
+// #[allow(unused)]
+// pub fn frame_allocator_alloc_more_test() {
+//     let mut v: Vec<FrameTracker> = Vec::new();
+//     let frames = frame_alloc_more(5).unwrap();
+//     for frame in &frames {
+//         println!("{:?}", frame);
+//     }
+//     v.extend(frames);
+//     v.clear();
+//     let frames = frame_alloc_more(5).unwrap();
+//     for frame in &frames {
+//         println!("{:?}", frame);
+//     }
+//     drop(v);
+//     println!("frame_allocator_test passed!");
+// }

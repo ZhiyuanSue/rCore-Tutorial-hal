@@ -92,9 +92,7 @@ impl ArchInterface for ArchInterfaceImpl {
 	}
 	fn frame_alloc_persist() -> PhysPage
 	{
-		let result=mm::frame_alloc().unwrap().ppn;
-		info!("frame alloc persisit {}",result);
-		result
+		mm::frame_alloc().unwrap()
 	}
 	fn frame_unalloc(ppn: PhysPage)
 	{
