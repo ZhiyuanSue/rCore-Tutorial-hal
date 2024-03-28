@@ -54,7 +54,7 @@ impl ArchInterface for ArchInterfaceImpl {
 		UART.init();
         let str = include_str!("logo.txt");
         println!("{}", str);
-		stdout_init(option_env!("LOG"));
+		stdout_init(Some("info"));
 		info!("hello, rCore turtorial");
     }
 	fn kernel_interrupt(ctx: &mut Context, trap_type: TrapType)
