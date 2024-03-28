@@ -273,9 +273,11 @@ impl PageTable {
 		info!("find_pte");
         for (i, idx) in idxs.iter().enumerate() {
 			let pa: PhysAddr = ppn.into();
+			info!("pa is {}, idx is {}",pa,idx);
 			let pte =&mut get_pte_list(pa)[*idx];
             // let pte = &mut ppn.get_pte_array()[*idx];
             if i == 2 {
+				info!("find the pte");
                 result = Some(pte);
                 break;
             }

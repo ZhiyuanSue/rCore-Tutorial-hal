@@ -382,7 +382,7 @@ impl PhysPage {
 		info!("go into get bytes array");
         let pa: PhysAddr = (*self).into();
 		info!("go into get bytes array {:#x}",pa.0);
-        unsafe { core::slice::from_raw_parts_mut(pa.0 as *mut u8, 4096) }
+        unsafe { core::slice::from_raw_parts_mut((pa.0|VIRT_ADDR_START) as *mut u8, 4096) }
     }
     pub fn get_mut<T>(&self) -> &'static mut T {
         let pa: PhysAddr = (*self).into();

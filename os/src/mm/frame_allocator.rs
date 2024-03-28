@@ -63,7 +63,6 @@ impl FrameAllocator for StackFrameAllocator {
     }
     fn alloc(&mut self) -> Option<PhysPage> {
         if let Some(ppn) = self.recycled.pop() {
-			info!("alloc ppn is {:#x}",ppn);
             Some((ppn & (arch::VIRT_ADDR_START_MASK >> 12)).into())
         } else if self.current == self.end {
             None
@@ -83,14 +82,12 @@ impl FrameAllocator for StackFrameAllocator {
         }
     }
     fn dealloc(&mut self, ppn: PhysPage) {
-		error!("frame dealloc ppn{}",ppn);
         let ppn = usize::from(ppn) & ((arch::VIRT_ADDR_START_MASK) >> 12);
         // validity check
         if ppn >= self.current || self.recycled.iter().any(|&v| v == ppn) {
             panic!("Frame ppn={:#x} has not been allocated!", ppn);
         }
         // recycle
-		error!("frame push ppn {:#x}",ppn);
         self.recycled.push(ppn);
     }
 }
@@ -107,8 +104,8 @@ pub fn init_frame_allocator() {
         fn ekernel();
     }
     FRAME_ALLOCATOR.exclusive_access().init(
-        PhysAddr::from(ekernel as usize).ceil(),
-        PhysAddr::from(MEMORY_END + arch::VIRT_ADDR_START).floor(),
+        PhysAddr::from((ekernel as usize) & arch::VIRT_ADDR_START_MASK).ceil(),
+        PhysAddr::from(MEMORY_END).floor(),
     );
 }
 
