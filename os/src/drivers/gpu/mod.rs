@@ -1,6 +1,7 @@
 use crate::drivers::bus::virtio::VirtioHal;
 use crate::sync::UPIntrFreeCell;
 use alloc::{sync::Arc, vec::Vec};
+use log::info;
 use core::any::Any;
 use embedded_graphics::pixelcolor::Rgb888;
 use tinybmp::Bmp;
@@ -24,12 +25,14 @@ static BMP_DATA: &[u8] = include_bytes!("../../assert/mouse.bmp");
 impl VirtIOGpuWrapper {
     pub fn new() -> Self {
         unsafe {
-			// arch::shutdown();
+			info!("debug 1");
             let mut virtio =
                 VirtIOGpu::<VirtioHal>::new(&mut *(VIRTIO7 as *mut VirtIOHeader)).unwrap();
-
+			info!("debug 2");
             let fbuffer = virtio.setup_framebuffer().unwrap();
+			info!("debug 3");
             let len = fbuffer.len();
+			info!("debug 4");
             let ptr = fbuffer.as_mut_ptr();
             let fb = core::slice::from_raw_parts_mut(ptr, len);
 

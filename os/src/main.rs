@@ -72,20 +72,29 @@ impl ArchInterface for ArchInterfaceImpl {
 	fn main(hartid: usize)
 	{
 		println!("[kernel] main start");
-		
+		println!("KERN: init gpu");
+		let _gpu = GPU_DEVICE.clone();
+		println!("KERN: init keyboard");
+		let _keyboard = KEYBOARD_DEVICE.clone();
+		println!("KERN: init mouse");
+		let _mouse = MOUSE_DEVICE.clone();
 		// trap::init();
 		// trap::enable_timer_interrupt();
 		// timer::set_next_trigger();
 		// board::device_init();
 		fs::list_apps();
+		info!("finish list apps");
 		task::add_initproc();
+		info!("finish add init proc");
 		*DEV_NON_BLOCKING_ACCESS.exclusive_access() = true;
 		task::run_tasks();
 		panic!("Unreachable in rust_main!");
 	}
 	fn frame_alloc_persist() -> PhysPage
 	{
-		mm::frame_alloc().unwrap().ppn
+		let result=mm::frame_alloc().unwrap().ppn;
+		info!("frame alloc persisit {}",result);
+		result
 	}
 	fn frame_unalloc(ppn: PhysPage)
 	{
@@ -98,12 +107,6 @@ impl ArchInterface for ArchInterfaceImpl {
 	}
 	fn try_to_add_device(fdtNode: &FdtNode)
 	{
-		println!("[kernel] try to add device");
-		// println!("KERN: init gpu");
-		let _gpu = GPU_DEVICE.clone();
-		// println!("KERN: init keyboard");
-		let _keyboard = KEYBOARD_DEVICE.clone();
-		// println!("KERN: init mouse");
-		let _mouse = MOUSE_DEVICE.clone();
+		// println!("[kernel] try to add device");
 	}
 }

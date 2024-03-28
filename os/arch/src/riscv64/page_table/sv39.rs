@@ -5,7 +5,7 @@ use bitflags::bitflags;
 
 use crate::{
     sigtrx::get_trx_mapping, ArchInterface, MappingFlags, PhysAddr, PhysPage, VirtAddr, VirtPage,
-    PAGE_ITEM_COUNT, PAGE_SIZE,
+    PAGE_ITEM_COUNT, PAGE_SIZE, VIRT_ADDR_START,
 };
 
 #[derive(Copy, Clone, Debug)]
@@ -156,6 +156,7 @@ impl From<MappingFlags> for PTEFlags {
 
 #[inline]
 pub fn get_pte_list(paddr: PhysAddr) -> &'static mut [PTE] {
+	info!("get pte_list {}",paddr);
     unsafe { core::slice::from_raw_parts_mut(paddr.get_mut_ptr::<PTE>(), PAGE_ITEM_COUNT) }
 }
 
@@ -172,6 +173,7 @@ impl PageTable {
 
     #[inline]
     pub fn restore(&self) {
+		info!("go into restore");
         let arr = get_pte_list(self.0);
         arr[0x100] = PTE::from_addr(0x0000_0000, PTEFlags::ADGVRWX);
         arr[0x101] = PTE::from_addr(0x4000_0000, PTEFlags::ADGVRWX);
@@ -202,6 +204,7 @@ impl PageTable {
     #[inline]
     pub fn map(&self, ppn: PhysPage, vpn: VirtPage, flags: MappingFlags, level: usize) {
         // TODO: Add huge page support.
+		info!("go into map");
         let mut pte_list = get_pte_list(self.0);
         for i in (1..level).rev() {
             let value = (vpn.0 >> 9 * i) & 0x1ff;
@@ -211,8 +214,9 @@ impl PageTable {
             }
             if !pte.is_valid() {
                 *pte = PTE::from_ppn(ArchInterface::frame_alloc_persist().0, PTEFlags::V);
+				info!("*pte to ppn is {}",(*pte).to_ppn());
             }
-
+			info!("go into map for loop");
             // page_table = PageTable(pte.to_ppn().into());
             pte_list = get_pte_list(pte.to_ppn().into());
         }
@@ -266,9 +270,10 @@ impl PageTable {
         let idxs = vpn.indexes();
         let mut ppn = self.0;
         let mut result: Option<&mut PTE> = None;
+		info!("find_pte");
         for (i, idx) in idxs.iter().enumerate() {
 			let pa: PhysAddr = ppn.into();
-			let pte =&mut unsafe { core::slice::from_raw_parts_mut(usize::from(pa) as *mut PTE, 512) }[*idx];
+			let pte =&mut get_pte_list(pa)[*idx];
             // let pte = &mut ppn.get_pte_array()[*idx];
             if i == 2 {
                 result = Some(pte);
@@ -279,9 +284,11 @@ impl PageTable {
             }
             ppn = PhysAddr::from(pte.to_ppn());
         }
+		info!("finish find pte");
         result
     }
 	pub fn translate(&self, vpn: VirtPage) -> Option<PTE> {
+		info!("go into translate");
         self.find_pte(vpn).map(|pte| *pte)
     }
     pub fn translate_va(&self, va: VirtAddr) -> Option<PhysAddr> {

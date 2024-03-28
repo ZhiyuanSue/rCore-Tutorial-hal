@@ -10,6 +10,7 @@ use alloc::vec::Vec;
 use core::arch::asm;
 use lazy_static::*;
 use riscv::register::satp;
+use log::info;
 
 extern "C" {
     fn stext();
@@ -75,10 +76,13 @@ impl MemorySet {
     /// Assuming that there are no conflicts in the virtual address
     /// space.
     pub fn push(&mut self, mut map_area: MapArea, data: Option<&[u8]>) {
+		info!("into memory set push");
         map_area.map(&mut self.page_table);
+		info!("into memory set push 2");
         if let Some(data) = data {
             map_area.copy_data(&mut self.page_table, data);
         }
+		info!("into memory set push 3");
         self.areas.push(map_area);
     }
     /// Mention that trampoline is not collected by areas.
@@ -180,6 +184,7 @@ impl MemorySet {
         assert_eq!(magic, [0x7f, 0x45, 0x4c, 0x46], "invalid elf!");
         let ph_count = elf_header.pt2.ph_count();
         let mut max_end_vpn = VirtPage::from_addr(0);
+		info!("from elf 1 {:}",ph_count);
         for i in 0..ph_count {
             let ph = elf.program_header(i).unwrap();
             if ph.get_type().unwrap() == xmas_elf::program::Type::Load {
@@ -198,14 +203,19 @@ impl MemorySet {
                 }
                 let map_area = MapArea::new(start_va, end_va, MapType::Framed, map_perm);
                 max_end_vpn = map_area.vpn_range.get_end();
+				info!("from elf 2");
                 memory_set.push(
                     map_area,
                     Some(&elf.input[ph.offset() as usize..(ph.offset() + ph.file_size()) as usize]),
                 );
+				info!("from elf 3");
             }
         }
+		info!("from elf 2");
         let max_end_va: VirtAddr = max_end_vpn.into();
+		info!("from elf 3");
         let mut user_stack_base: usize = max_end_va.into();
+		info!("from elf 4");
         user_stack_base += PAGE_SIZE;
         (
             memory_set,
@@ -281,21 +291,27 @@ impl MapArea {
     }
     pub fn map_one(&mut self, page_table: &mut PageTable, vpn: VirtPage) {
         let ppn: PhysPage;
+		info!("go into map one");
         match self.map_type {
             MapType::Identical => {
+				info!("map type ident");
                 ppn = PhysPage::from_addr(usize::from(vpn));
             }
             MapType::Framed => {
+				info!("map type framed");
                 let frame = frame_alloc().unwrap();
                 ppn = frame.ppn;
+				info!("map insert {}",ppn);
                 self.data_frames.insert(vpn, frame);
             }
             MapType::Linear(pn_offset) => {
                 // check for sv39
+				info!("map type linear");
                 assert!((usize::from(vpn)) < (1usize << 27));
                 ppn = PhysPage::from_addr((usize::from(vpn) as isize + pn_offset) as usize);
             }
         }
+		info!("end map one match");
         let mapping_flags = MappingFlags::from_bits(self.map_perm.bits as u64).unwrap();
         page_table.map(ppn,vpn, mapping_flags,3);
     }
@@ -306,7 +322,9 @@ impl MapArea {
         page_table.unmap(vpn);
     }
     pub fn map(&mut self, page_table: &mut PageTable) {
+		info!("into map");
         for vpn in self.vpn_range {
+			info!("map vpn {}",vpn);
             self.map_one(page_table, vpn);
         }
     }
@@ -318,23 +336,28 @@ impl MapArea {
     /// data: start-aligned but maybe with shorter length
     /// assume that all frames were cleared before
     pub fn copy_data(&mut self, page_table: &mut PageTable, data: &[u8]) {
+		info!("go into copy data");
         assert_eq!(self.map_type, MapType::Framed);
         let mut start: usize = 0;
         let mut current_vpn = self.vpn_range.get_start();
         let len = data.len();
         loop {
+			info!("go into copy data 2");
             let src = &data[start..len.min(start + PAGE_SIZE)];
+			info!("go into copy data 3");
             let dst = &mut page_table
                 .translate(current_vpn)
                 .unwrap()
                 .to_ppn()
                 .get_bytes_array()[..src.len()];
             dst.copy_from_slice(src);
+			info!("go into copy data 4");
             start += PAGE_SIZE;
             if start >= len {
                 break;
             }
             current_vpn.step();
+			info!("go into copy data 5");
         }
     }
 }

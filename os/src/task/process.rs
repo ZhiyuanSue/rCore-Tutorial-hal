@@ -11,6 +11,7 @@ use alloc::string::String;
 use alloc::sync::{Arc, Weak};
 use alloc::vec;
 use alloc::vec::Vec;
+use log::info;
 
 pub struct ProcessControlBlock {
     // immutable
@@ -72,8 +73,10 @@ impl ProcessControlBlock {
     }
 
     pub fn new(elf_data: &[u8]) -> Arc<Self> {
+		info!("start new a pcb");
         // memory_set with elf program headers/trampoline/trap context/user stack
         let (memory_set, ustack_base, entry_point) = MemorySet::from_elf(elf_data);
+		info!("read a elf finish");
         // allocate a pid
         let pid_handle = pid_alloc();
         let process = Arc::new(Self {

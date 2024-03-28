@@ -13,6 +13,7 @@ use crate::fs::{open_file, OpenFlags};
 use arch::shutdown;
 use alloc::{sync::Arc, vec::Vec};
 use lazy_static::*;
+use log::info;
 use manager::fetch_task;
 use process::ProcessControlBlock;
 use switch::__switch;
@@ -143,8 +144,11 @@ pub fn exit_current_and_run_next(exit_code: i32) {
 
 lazy_static! {
     pub static ref INITPROC: Arc<ProcessControlBlock> = {
+		info!("start initproc");
         let inode = open_file("initproc", OpenFlags::RDONLY).unwrap();
+		info!("initproc 2");
         let v = inode.read_all();
+		info!("initproc 3");
         ProcessControlBlock::new(v.as_slice())
     };
 }

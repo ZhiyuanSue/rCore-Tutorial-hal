@@ -2,6 +2,7 @@ use super::{PhysAddr, PhysPage};
 use crate::config::MEMORY_END;
 use crate::sync::UPIntrFreeCell;
 use alloc::vec::Vec;
+use log::{info,error};
 use core::fmt::{self, Debug, Formatter};
 use lazy_static::*;
 
@@ -62,12 +63,13 @@ impl FrameAllocator for StackFrameAllocator {
     }
     fn alloc(&mut self) -> Option<PhysPage> {
         if let Some(ppn) = self.recycled.pop() {
-            Some(ppn.into())
+			info!("alloc ppn is {:#x}",ppn);
+            Some((ppn & (arch::VIRT_ADDR_START_MASK >> 12)).into())
         } else if self.current == self.end {
             None
         } else {
             self.current += 1;
-            Some((self.current - 1).into())
+            Some(((self.current - 1) & (arch::VIRT_ADDR_START_MASK >> 12)).into())
         }
     }
     fn alloc_more(&mut self, pages: usize) -> Option<Vec<PhysPage>> {
@@ -81,12 +83,14 @@ impl FrameAllocator for StackFrameAllocator {
         }
     }
     fn dealloc(&mut self, ppn: PhysPage) {
-        let ppn = usize::from(ppn);
+		error!("frame dealloc ppn{}",ppn);
+        let ppn = usize::from(ppn) & ((arch::VIRT_ADDR_START_MASK) >> 12);
         // validity check
         if ppn >= self.current || self.recycled.iter().any(|&v| v == ppn) {
             panic!("Frame ppn={:#x} has not been allocated!", ppn);
         }
         // recycle
+		error!("frame push ppn {:#x}",ppn);
         self.recycled.push(ppn);
     }
 }

@@ -22,7 +22,7 @@ impl Hal for VirtioHal {
             .exclusive_access()
             .append(&mut trakcers.unwrap());
         let pa: PhysAddr = ppn_base.into();
-        usize::from(pa)
+        usize::from(pa)-arch::VIRT_ADDR_START
     }
 
     fn dma_dealloc(pa: usize, pages: usize) -> i32 {
@@ -36,12 +36,13 @@ impl Hal for VirtioHal {
     }
 
     fn phys_to_virt(addr: usize) -> usize {
-        addr
+        addr+arch::VIRT_ADDR_START
     }
 
     fn virt_to_phys(vaddr: usize) -> usize {
-        usize::from(PageTable::from_satp(kernel_token())
-            .translate_va(VirtAddr::from(vaddr))
-            .unwrap())
+        // usize::from(PageTable::from_satp(kernel_token())
+        //     .translate_va(VirtAddr::from(vaddr))
+        //     .unwrap())
+		vaddr-arch::VIRT_ADDR_START
     }
 }

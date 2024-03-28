@@ -25,7 +25,7 @@ use crate::ArchInterface;
 #[no_mangle]
 extern "C" fn rust_main(hartid: usize, device_tree: usize) {
 	
-	// crate::clear_bss();
+	crate::clear_bss();
 	// Init allocator
 	// allocator::init();
     ArchInterface::init_logging();
