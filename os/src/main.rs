@@ -50,6 +50,7 @@ struct ArchInterfaceImpl;
 #[crate_interface::impl_interface]
 impl ArchInterface for ArchInterfaceImpl {
 	fn init_logging() {
+		mm::init();
 		UART.init();
         let str = include_str!("logo.txt");
         println!("{}", str);
@@ -59,6 +60,7 @@ impl ArchInterface for ArchInterfaceImpl {
 	fn kernel_interrupt(ctx: &mut Context, trap_type: TrapType)
 	{
 		println!("[kernel] kernel interrupt");
+		println!("KERN: init trap");
 		trap::init();
 		trap::enable_timer_interrupt();
 		timer::set_next_trigger();
@@ -97,12 +99,11 @@ impl ArchInterface for ArchInterfaceImpl {
 	fn try_to_add_device(fdtNode: &FdtNode)
 	{
 		println!("[kernel] try to add device");
-		println!("KERN: init gpu");
+		// println!("KERN: init gpu");
 		let _gpu = GPU_DEVICE.clone();
-		println!("KERN: init keyboard");
+		// println!("KERN: init keyboard");
 		let _keyboard = KEYBOARD_DEVICE.clone();
-		println!("KERN: init mouse");
+		// println!("KERN: init mouse");
 		let _mouse = MOUSE_DEVICE.clone();
-		println!("KERN: init trap");
 	}
 }

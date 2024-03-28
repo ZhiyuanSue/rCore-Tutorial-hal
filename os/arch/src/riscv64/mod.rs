@@ -27,7 +27,7 @@ extern "C" fn rust_main(hartid: usize, device_tree: usize) {
 	
 	// crate::clear_bss();
 	// Init allocator
-	allocator::init();
+	// allocator::init();
     ArchInterface::init_logging();
 
     percpu::init(1);

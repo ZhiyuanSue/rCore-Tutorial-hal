@@ -1,5 +1,4 @@
 mod frame_allocator;
-mod heap_allocator;
 mod memory_set;
 
 pub use arch::{VPNRange,StepByOne,PhysAddr,PhysPage,VirtAddr,VirtPage};
