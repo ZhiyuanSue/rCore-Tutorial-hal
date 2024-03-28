@@ -11,6 +11,7 @@ use arch::{
 };
 use fdt::node::FdtNode;
 use log::info;
+use crate::console::stdout_init;
 extern crate alloc;
 
 #[macro_use]
@@ -52,6 +53,7 @@ impl ArchInterface for ArchInterfaceImpl {
 		UART.init();
         let str = include_str!("logo.txt");
         println!("{}", str);
+		stdout_init(option_env!("LOG"));
 		info!("hello, rCore turtorial");
     }
 	fn kernel_interrupt(ctx: &mut Context, trap_type: TrapType)
