@@ -12,7 +12,11 @@ use alloc::vec::Vec;
 pub fn init() {
 	allocator::init();
     frame_allocator::init_frame_allocator();
-    // KERNEL_SPACE.exclusive_access().activate();
+    
+}
+pub fn init_kernel_space()
+{
+	KERNEL_SPACE.exclusive_access().token();
 }
 
 pub fn translated_byte_buffer(token: usize, ptr: *const u8, len: usize) -> Vec<&'static mut [u8]> {

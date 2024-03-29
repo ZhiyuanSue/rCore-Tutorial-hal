@@ -4,6 +4,7 @@ use super::{ProcessControlBlock, TaskContext, TaskControlBlock};
 use crate::sync::UPIntrFreeCell;
 use crate::trap::TrapContext;
 use alloc::sync::Arc;
+use log::info;
 use core::arch::asm;
 use lazy_static::*;
 
@@ -36,6 +37,7 @@ lazy_static! {
 }
 
 pub fn run_tasks() {
+	info!("go into run tasks");
     loop {
         let mut processor = PROCESSOR.exclusive_access();
         if let Some(task) = fetch_task() {

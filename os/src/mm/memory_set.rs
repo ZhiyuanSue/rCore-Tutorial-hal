@@ -76,13 +76,10 @@ impl MemorySet {
     /// Assuming that there are no conflicts in the virtual address
     /// space.
     pub fn push(&mut self, mut map_area: MapArea, data: Option<&[u8]>) {
-		info!("into memory set push");
         map_area.map(&mut self.page_table);
-		info!("into memory set push 2");
         if let Some(data) = data {
             map_area.copy_data(&mut self.page_table, data);
         }
-		info!("into memory set push 3");
         self.areas.push(map_area);
     }
     /// Mention that trampoline is not collected by areas.
@@ -98,79 +95,79 @@ impl MemorySet {
     pub fn new_kernel() -> Self {
         let mut memory_set = Self::new_bare();
         // map trampoline
-        memory_set.map_trampoline();
+        // memory_set.map_trampoline();
 
-        // map kernel sections
-        println!(".text [{:#x}, {:#x})", stext as usize, etext as usize);
-        println!(".rodata [{:#x}, {:#x})", srodata as usize, erodata as usize);
-        println!(".data [{:#x}, {:#x})", _sdata as usize, _edata as usize);
-        println!(
-            ".bss [{:#x}, {:#x})",
-            sbss_with_stack as usize, _ebss as usize
-        );
-        println!("mapping .text section");
+        // // map kernel sections
+        // println!(".text [{:#x}, {:#x})", stext as usize, etext as usize);
+        // println!(".rodata [{:#x}, {:#x})", srodata as usize, erodata as usize);
+        // println!(".data [{:#x}, {:#x})", _sdata as usize, _edata as usize);
+        // println!(
+        //     ".bss [{:#x}, {:#x})",
+        //     sbss_with_stack as usize, _ebss as usize
+        // );
+        // println!("mapping .text section");
         
-		memory_set.push(
-            MapArea::new(
-                (stext as usize).into(),
-                (etext as usize).into(),
-                MapType::Identical,
-                MapPermission::R | MapPermission::X,
-            ),
-            None,
-        );
-        println!("mapping .rodata section");
-        memory_set.push(
-            MapArea::new(
-                (srodata as usize).into(),
-                (erodata as usize).into(),
-                MapType::Identical,
-                MapPermission::R,
-            ),
-            None,
-        );
-        println!("mapping .data section");
-        memory_set.push(
-            MapArea::new(
-                (_sdata as usize).into(),
-                (_edata as usize).into(),
-                MapType::Identical,
-                MapPermission::R | MapPermission::W,
-            ),
-            None,
-        );
-        println!("mapping .bss section");
-        memory_set.push(
-            MapArea::new(
-                (sbss_with_stack as usize).into(),
-                (_ebss as usize).into(),
-                MapType::Identical,
-                MapPermission::R | MapPermission::W,
-            ),
-            None,
-        );
-        println!("mapping physical memory");
-        memory_set.push(
-            MapArea::new(
-                (ekernel as usize).into(),
-                MEMORY_END.into(),
-                MapType::Identical,
-                MapPermission::R | MapPermission::W,
-            ),
-            None,
-        );
-        println!("mapping memory-mapped registers");
-        for pair in MMIO {
-            memory_set.push(
-                MapArea::new(
-                    (*pair).0.into(),
-                    ((*pair).0 + (*pair).1).into(),
-                    MapType::Identical,
-                    MapPermission::R | MapPermission::W,
-                ),
-                None,
-            );
-        }
+		// memory_set.push(
+        //     MapArea::new(
+        //         (stext as usize).into(),
+        //         (etext as usize).into(),
+        //         MapType::Identical,
+        //         MapPermission::R | MapPermission::X,
+        //     ),
+        //     None,
+        // );
+        // println!("mapping .rodata section");
+        // memory_set.push(
+        //     MapArea::new(
+        //         (srodata as usize).into(),
+        //         (erodata as usize).into(),
+        //         MapType::Identical,
+        //         MapPermission::R,
+        //     ),
+        //     None,
+        // );
+        // println!("mapping .data section");
+        // memory_set.push(
+        //     MapArea::new(
+        //         (_sdata as usize).into(),
+        //         (_edata as usize).into(),
+        //         MapType::Identical,
+        //         MapPermission::R | MapPermission::W,
+        //     ),
+        //     None,
+        // );
+        // println!("mapping .bss section");
+        // memory_set.push(
+        //     MapArea::new(
+        //         (sbss_with_stack as usize).into(),
+        //         (_ebss as usize).into(),
+        //         MapType::Identical,
+        //         MapPermission::R | MapPermission::W,
+        //     ),
+        //     None,
+        // );
+        // println!("mapping physical memory");
+        // memory_set.push(
+        //     MapArea::new(
+        //         (ekernel as usize).into(),
+        //         MEMORY_END.into(),
+        //         MapType::Identical,
+        //         MapPermission::R | MapPermission::W,
+        //     ),
+        //     None,
+        // );
+        // println!("mapping memory-mapped registers");
+        // for pair in MMIO {
+        //     memory_set.push(
+        //         MapArea::new(
+        //             (*pair).0.into(),
+        //             ((*pair).0 + (*pair).1).into(),
+        //             MapType::Identical,
+        //             MapPermission::R | MapPermission::W,
+        //         ),
+        //         None,
+        //     );
+        // }
         memory_set
     }
     /// Include sections in elf and trampoline,
@@ -186,7 +183,6 @@ impl MemorySet {
         assert_eq!(magic, [0x7f, 0x45, 0x4c, 0x46], "invalid elf!");
         let ph_count = elf_header.pt2.ph_count();
         let mut max_end_vpn = VirtPage::from_addr(0);
-		info!("from elf 1 {:}",ph_count);
         for i in 0..ph_count {
             let ph = elf.program_header(i).unwrap();
             if ph.get_type().unwrap() == xmas_elf::program::Type::Load {
@@ -205,19 +201,14 @@ impl MemorySet {
                 }
                 let map_area = MapArea::new(start_va, end_va, MapType::Framed, map_perm);
                 max_end_vpn = map_area.vpn_range.get_end();
-				info!("from elf 2");
                 memory_set.push(
                     map_area,
                     Some(&elf.input[ph.offset() as usize..(ph.offset() + ph.file_size()) as usize]),
                 );
-				info!("from elf 3");
             }
         }
-		info!("from elf 2");
         let max_end_va: VirtAddr = max_end_vpn.into();
-		info!("from elf 3");
         let mut user_stack_base: usize = max_end_va.into();
-		info!("from elf 4");
         user_stack_base += PAGE_SIZE;
         (
             memory_set,
@@ -295,7 +286,6 @@ impl MapArea {
         let ppn: PhysPage;
         match self.map_type {
             MapType::Identical => {
-				info!("map identical");
                 ppn = PhysPage::from(usize::from(vpn)&(arch::VIRT_ADDR_START_MASK>>12)) ;
             }
             MapType::Framed => {
@@ -309,10 +299,8 @@ impl MapArea {
                 ppn = PhysPage::from_addr((usize::from(vpn) as isize + pn_offset) as usize);
             }
         }
-		info!("map ppn{}",ppn);
         let mapping_flags = MappingFlags::from_bits(self.map_perm.bits as u64).unwrap();
         page_table.map(ppn,vpn, mapping_flags,3);
-		info!("finish map page");
     }
     pub fn unmap_one(&mut self, page_table: &mut PageTable, vpn: VirtPage) {
         if self.map_type == MapType::Framed {
@@ -321,9 +309,7 @@ impl MapArea {
         page_table.unmap(vpn);
     }
     pub fn map(&mut self, page_table: &mut PageTable) {
-		info!("into map");
         for vpn in self.vpn_range {
-			info!("map vpn {}",vpn);
             self.map_one(page_table, vpn);
         }
     }

@@ -56,6 +56,7 @@ impl ArchInterface for ArchInterfaceImpl {
         println!("{}", str);
 		stdout_init(Some("info"));
 		info!("hello, rCore turtorial");
+		mm::init_kernel_space();
     }
 	fn kernel_interrupt(ctx: &mut Context, trap_type: TrapType)
 	{
