@@ -63,13 +63,10 @@ impl FrameAllocator for StackFrameAllocator {
     }
     fn alloc(&mut self) -> Option<PhysPage> {
         if let Some(ppn) = self.recycled.pop() {
-			error!("alloc 1");
             Some((ppn & (arch::VIRT_ADDR_START_MASK >> 12)).into())
         } else if self.current == self.end {
-			error!("alloc 2");
             None
         } else {
-			error!("alloc 3");
             self.current += 1;
             Some(((self.current - 1) & (arch::VIRT_ADDR_START_MASK >> 12)).into())
         }

@@ -88,7 +88,7 @@ impl MemorySet {
     /// Mention that trampoline is not collected by areas.
     fn map_trampoline(&mut self) {
         self.page_table.map(
-            PhysAddr::from(strampoline as usize).into(),
+            PhysAddr::from((strampoline as usize)&arch::VIRT_ADDR_START_MASK).into(),
 			VirtAddr::from(TRAMPOLINE).into(),
             MappingFlags::R | MappingFlags::X,
 			3
@@ -99,16 +99,18 @@ impl MemorySet {
         let mut memory_set = Self::new_bare();
         // map trampoline
         memory_set.map_trampoline();
+
         // map kernel sections
-        // println!(".text [{:#x}, {:#x})", stext as usize, etext as usize);
-        // println!(".rodata [{:#x}, {:#x})", srodata as usize, erodata as usize);
-        // println!(".data [{:#x}, {:#x})", sdata as usize, edata as usize);
-        // println!(
-        //     ".bss [{:#x}, {:#x})",
-        //     sbss_with_stack as usize, ebss as usize
-        // );
-        // println!("mapping .text section");
-        memory_set.push(
+        println!(".text [{:#x}, {:#x})", stext as usize, etext as usize);
+        println!(".rodata [{:#x}, {:#x})", srodata as usize, erodata as usize);
+        println!(".data [{:#x}, {:#x})", _sdata as usize, _edata as usize);
+        println!(
+            ".bss [{:#x}, {:#x})",
+            sbss_with_stack as usize, _ebss as usize
+        );
+        println!("mapping .text section");
+        
+		memory_set.push(
             MapArea::new(
                 (stext as usize).into(),
                 (etext as usize).into(),
@@ -117,7 +119,7 @@ impl MemorySet {
             ),
             None,
         );
-        // println!("mapping .rodata section");
+        println!("mapping .rodata section");
         memory_set.push(
             MapArea::new(
                 (srodata as usize).into(),
@@ -127,7 +129,7 @@ impl MemorySet {
             ),
             None,
         );
-        // println!("mapping .data section");
+        println!("mapping .data section");
         memory_set.push(
             MapArea::new(
                 (_sdata as usize).into(),
@@ -137,7 +139,7 @@ impl MemorySet {
             ),
             None,
         );
-        // println!("mapping .bss section");
+        println!("mapping .bss section");
         memory_set.push(
             MapArea::new(
                 (sbss_with_stack as usize).into(),
@@ -147,7 +149,7 @@ impl MemorySet {
             ),
             None,
         );
-        // println!("mapping physical memory");
+        println!("mapping physical memory");
         memory_set.push(
             MapArea::new(
                 (ekernel as usize).into(),
@@ -157,7 +159,7 @@ impl MemorySet {
             ),
             None,
         );
-        //println!("mapping memory-mapped registers");
+        println!("mapping memory-mapped registers");
         for pair in MMIO {
             memory_set.push(
                 MapArea::new(
@@ -291,10 +293,10 @@ impl MapArea {
     }
     pub fn map_one(&mut self, page_table: &mut PageTable, vpn: VirtPage) {
         let ppn: PhysPage;
-		error!("go into map one");
         match self.map_type {
             MapType::Identical => {
-                ppn = PhysPage::from_addr(usize::from(vpn));
+				info!("map identical");
+                ppn = PhysPage::from(usize::from(vpn)&(arch::VIRT_ADDR_START_MASK>>12)) ;
             }
             MapType::Framed => {
                 let frame = frame_alloc().unwrap();
@@ -307,9 +309,10 @@ impl MapArea {
                 ppn = PhysPage::from_addr((usize::from(vpn) as isize + pn_offset) as usize);
             }
         }
-		error!("end map one match");
+		info!("map ppn{}",ppn);
         let mapping_flags = MappingFlags::from_bits(self.map_perm.bits as u64).unwrap();
         page_table.map(ppn,vpn, mapping_flags,3);
+		info!("finish map page");
     }
     pub fn unmap_one(&mut self, page_table: &mut PageTable, vpn: VirtPage) {
         if self.map_type == MapType::Framed {
@@ -332,28 +335,23 @@ impl MapArea {
     /// data: start-aligned but maybe with shorter length
     /// assume that all frames were cleared before
     pub fn copy_data(&mut self, page_table: &mut PageTable, data: &[u8]) {
-		info!("go into copy data");
         assert_eq!(self.map_type, MapType::Framed);
         let mut start: usize = 0;
         let mut current_vpn = self.vpn_range.get_start();
         let len = data.len();
         loop {
-			info!("go into copy data 2");
             let src = &data[start..len.min(start + PAGE_SIZE)];
-			info!("go into copy data 3");
             let dst = &mut page_table
                 .translate(current_vpn)
                 .unwrap()
                 .to_ppn()
                 .get_bytes_array()[..src.len()];
             dst.copy_from_slice(src);
-			info!("go into copy data 4");
             start += PAGE_SIZE;
             if start >= len {
                 break;
             }
             current_vpn.step();
-			info!("go into copy data 5");
         }
     }
 }

@@ -206,7 +206,6 @@ impl PageTable {
         let mut pte_list = get_pte_list(self.0);
         for i in (1..(level+1)).rev() {
             let value = (vpn.0 >> (9 * (i-1))) & 0x1ff;
-			info!("i is {} value is {}",i,value);
             let pte = &mut pte_list[value];
             if i == 0 {
                 break;
@@ -267,14 +266,11 @@ impl PageTable {
         let idxs = vpn.indexes();
         let mut ppn = self.0;
         let mut result: Option<&mut PTE> = None;
-		info!("find_pte vpn {}",vpn);
         for (i, idx) in idxs.iter().enumerate() {
 			let pa: PhysAddr = ppn.into();
-			info!("pa is {}, idx is {}",pa,idx);
 			let pte =&mut get_pte_list(pa)[*idx];
             // let pte = &mut ppn.get_pte_array()[*idx];
             if i == 2 {
-				info!("find the pte");
                 result = Some(pte);
                 break;
             }
@@ -283,11 +279,9 @@ impl PageTable {
             }
             ppn = PhysAddr::from(pte.to_ppn());
         }
-		info!("finish find pte");
         result
     }
 	pub fn translate(&self, vpn: VirtPage) -> Option<PTE> {
-		info!("go into translate");
         self.find_pte(vpn).map(|pte| *pte)
     }
     pub fn translate_va(&self, va: VirtAddr) -> Option<PhysAddr> {
