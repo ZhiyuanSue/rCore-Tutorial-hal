@@ -202,7 +202,7 @@ impl PageTable {
     #[inline]
     pub fn map(&self, ppn: PhysPage, vpn: VirtPage, flags: MappingFlags, level: usize) {
         // TODO: Add huge page support.
-		info!("go into page table map ppn {} vpn {:#x}",ppn,vpn.0);
+		info!("go into page table map ppn {} vpn {}",ppn,vpn);
         let mut pte_list = get_pte_list(self.0);
         for i in (1..(level+1)).rev() {
             let value = (vpn.0 >> (9 * (i-1))) & 0x1ff;
@@ -216,7 +216,6 @@ impl PageTable {
             // page_table = PageTable(pte.to_ppn().into());
             pte_list = get_pte_list(pte.to_ppn().into());
         }
-
         pte_list[vpn.0 & 0x1ff] = PTE::from_ppn(ppn.0, flags.into());
         unsafe {
             sfence_vma(vpn.to_addr(), 0);

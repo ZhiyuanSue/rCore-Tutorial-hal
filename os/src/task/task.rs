@@ -2,10 +2,11 @@ use super::id::TaskUserRes;
 use super::{kstack_alloc, KernelStack, ProcessControlBlock, TaskContext};
 use crate::trap::TrapContext;
 use crate::{
-    mm::PhysPage,
+    mm::PhysPage,mm::VirtPage,
     sync::{UPIntrFreeCell, UPIntrRefMut},
 };
 use alloc::sync::{Arc, Weak};
+use log::error;
 
 pub struct TaskControlBlock {
     // immutable
@@ -30,6 +31,7 @@ impl TaskControlBlock {
 pub struct TaskControlBlockInner {
     pub res: Option<TaskUserRes>,
     pub trap_cx_ppn: PhysPage,
+	pub trap_cx_vpn: VirtPage,
     pub task_cx: TaskContext,
     pub task_status: TaskStatus,
     pub exit_code: Option<i32>,
@@ -37,7 +39,7 @@ pub struct TaskControlBlockInner {
 
 impl TaskControlBlockInner {
     pub fn get_trap_cx(&self) -> &'static mut TrapContext {
-        self.trap_cx_ppn.get_mut()
+        self.trap_cx_vpn.get_mut()
     }
 
     #[allow(unused)]
@@ -54,8 +56,12 @@ impl TaskControlBlock {
     ) -> Self {
         let res = TaskUserRes::new(Arc::clone(&process), ustack_base, alloc_user_res);
         let trap_cx_ppn = res.trap_cx_ppn();
+		let phys_addr=trap_cx_ppn.to_addr();
+		let virt_addr=phys_addr|arch::VIRT_ADDR_START;
+		let trap_cx_vpn=VirtPage::from_addr(virt_addr);
         let kstack = kstack_alloc();
         let kstack_top = kstack.get_top();
+		error!("tcb {} {:#x} {}",trap_cx_ppn,kstack_top,trap_cx_vpn);
         Self {
             process: Arc::downgrade(&process),
             kstack,
@@ -63,6 +69,7 @@ impl TaskControlBlock {
                 UPIntrFreeCell::new(TaskControlBlockInner {
                     res: Some(res),
                     trap_cx_ppn,
+					trap_cx_vpn,
                     task_cx: TaskContext::goto_trap_return(kstack_top),
                     task_status: TaskStatus::Ready,
                     exit_code: None,

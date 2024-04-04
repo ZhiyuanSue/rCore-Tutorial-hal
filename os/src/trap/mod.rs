@@ -8,6 +8,7 @@ use crate::task::{
 };
 use crate::timer::{check_timer, set_next_trigger};
 use core::arch::{asm, global_asm};
+use log::info;
 use riscv::register::{
     mtvec::TrapMode,
     scause::{self, Exception, Interrupt, Trap},
@@ -26,6 +27,7 @@ fn set_kernel_trap_entry() {
         fn __alltraps_k();
     }
     let __alltraps_k_va = __alltraps_k as usize - __alltraps as usize + TRAMPOLINE;
+	info!("__alltraps_k_va is {:#x}",__alltraps_k_va);
     unsafe {
         stvec::write(__alltraps_k_va, TrapMode::Direct);
         sscratch::write(trap_from_kernel as usize);
@@ -121,6 +123,7 @@ pub fn trap_handler() -> ! {
 
 #[no_mangle]
 pub fn trap_return() -> ! {
+	info!("go into trap return");
     disable_supervisor_interrupt();
     set_user_trap_entry();
     let trap_cx_user_va = current_trap_cx_user_va();
@@ -145,6 +148,7 @@ pub fn trap_return() -> ! {
 
 #[no_mangle]
 pub fn trap_from_kernel(_trap_cx: &TrapContext) {
+	info!("trap from kernel");
     let scause = scause::read();
     let stval = stval::read();
     match scause.cause() {

@@ -57,14 +57,29 @@ impl ArchInterface for ArchInterfaceImpl {
 		stdout_init(Some("info"));
 		info!("hello, rCore turtorial");
 		mm::init_kernel_space();
+		info!("finish init logging");
     }
 	fn kernel_interrupt(ctx: &mut Context, trap_type: TrapType)
 	{
-		println!("[kernel] kernel interrupt");
-		println!("KERN: init trap");
-		trap::init();
-		trap::enable_timer_interrupt();
-		timer::set_next_trigger();
+		// println!("[kernel] kernel interrupt");
+		// println!("KERN: init trap");
+		// trap::init();
+		// trap::enable_timer_interrupt();
+		// timer::set_next_trigger();
+		match trap_type {
+            TrapType::StorePageFault(addr)
+            | TrapType::InstructionPageFault(addr)
+            | TrapType::LoadPageFault(addr) => {
+                
+            }
+            TrapType::IllegalInstruction(addr) => {
+                
+            }
+            TrapType::SupervisorExternal => {
+            }
+            _ => {
+            }
+        };
 	}
 	fn add_memory_region(start: usize, end: usize)
 	{
@@ -79,7 +94,7 @@ impl ArchInterface for ArchInterfaceImpl {
 		let _keyboard = KEYBOARD_DEVICE.clone();
 		println!("KERN: init mouse");
 		let _mouse = MOUSE_DEVICE.clone();
-		// trap::init();
+		trap::init();
 		// trap::enable_timer_interrupt();
 		// timer::set_next_trigger();
 		// board::device_init();

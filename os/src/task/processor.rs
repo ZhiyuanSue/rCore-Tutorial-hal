@@ -40,6 +40,7 @@ pub fn run_tasks() {
 	info!("go into run tasks");
     loop {
         let mut processor = PROCESSOR.exclusive_access();
+		info!("run tasks loop1");
         if let Some(task) = fetch_task() {
             let idle_task_cx_ptr = processor.get_idle_task_cx_ptr();
             // access coming task TCB exclusively
@@ -50,6 +51,7 @@ pub fn run_tasks() {
             processor.current = Some(task);
             // release processor manually
             drop(processor);
+			info!("run tasks loop2");
             unsafe {
                 __switch(idle_task_cx_ptr, next_task_cx_ptr);
             }

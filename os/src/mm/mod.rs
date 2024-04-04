@@ -8,7 +8,7 @@ pub use memory_set::{kernel_token, MapArea, MapPermission, MapType, MemorySet, K
 pub use arch::{PageTable,PTE,MappingFlags};
 use alloc::string::String;
 use alloc::vec::Vec;
-
+use riscv::register::satp;
 pub fn init() {
 	allocator::init();
     frame_allocator::init_frame_allocator();
@@ -16,7 +16,11 @@ pub fn init() {
 }
 pub fn init_kernel_space()
 {
-	KERNEL_SPACE.exclusive_access().token();
+	let satp=KERNEL_SPACE.exclusive_access().token();
+	unsafe {
+		satp::write(satp);
+		core::arch::asm!("sfence.vma");
+	}
 }
 
 pub fn translated_byte_buffer(token: usize, ptr: *const u8, len: usize) -> Vec<&'static mut [u8]> {

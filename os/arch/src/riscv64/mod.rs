@@ -34,30 +34,30 @@ extern "C" fn rust_main(hartid: usize, device_tree: usize) {
     percpu::set_local_thread_pointer(hartid);
 
     let (hartid, device_tree) = boards::init_device(hartid, device_tree);
-
+	info!("device tree place is {:#x}",device_tree);
     let mut dt_buf = Vec::new();
-    if device_tree != 0 {
-        let fdt = unsafe { Fdt::from_ptr(device_tree as *const u8).unwrap() };
+    // if device_tree != 0 {
+    //     let fdt = unsafe { Fdt::from_ptr(device_tree as *const u8).unwrap() };
 
-        dt_buf.extend_from_slice(unsafe {
-            core::slice::from_raw_parts(device_tree as *const u8, fdt.total_size())
-        });
+    //     dt_buf.extend_from_slice(unsafe {
+    //         core::slice::from_raw_parts(device_tree as *const u8, fdt.total_size())
+    //     });
 
-        info!("There has {} CPU(s)", fdt.cpus().count());
+    //     info!("There has {} CPU(s)", fdt.cpus().count());
 
-        fdt.memory().regions().for_each(|x| {
-            info!(
-                "memory region {:#X} - {:#X}",
-                x.starting_address as usize,
-                x.starting_address as usize + x.size.unwrap()
-            );
+    //     fdt.memory().regions().for_each(|x| {
+    //         info!(
+    //             "memory region {:#X} - {:#X}",
+    //             x.starting_address as usize,
+    //             x.starting_address as usize + x.size.unwrap()
+    //         );
 
-            ArchInterface::add_memory_region(
-                x.starting_address as usize | VIRT_ADDR_START,
-                (x.starting_address as usize + x.size.unwrap()) | VIRT_ADDR_START,
-            );
-        });
-    }
+    //         ArchInterface::add_memory_region(
+    //             x.starting_address as usize | VIRT_ADDR_START,
+    //             (x.starting_address as usize + x.size.unwrap()) | VIRT_ADDR_START,
+    //         );
+    //     });
+    // }
 
     ArchInterface::prepare_drivers();
 

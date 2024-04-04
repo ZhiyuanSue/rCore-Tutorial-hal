@@ -387,6 +387,21 @@ impl PhysPage {
         pa.get_mut()
     }
 }
+impl VirtAddr {
+    pub fn get_mut<T>(&self) -> &'static mut T {
+        unsafe { (self.0 as *mut T).as_mut().unwrap() }
+    }
+}
+impl VirtPage {
+    pub fn get_bytes_array(&self) -> &'static mut [u8] {
+        let pa: VirtAddr = (*self).into();
+        unsafe { core::slice::from_raw_parts_mut((pa.0|VIRT_ADDR_START) as *mut u8, 4096) }
+    }
+    pub fn get_mut<T>(&self) -> &'static mut T {
+        let pa: VirtAddr = (*self).into();
+        pa.get_mut()
+    }
+}
 pub trait StepByOne {
     fn step(&mut self);
 }

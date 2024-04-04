@@ -111,7 +111,7 @@ impl ProcessControlBlock {
         ));
         // prepare trap_cx of main thread
         let task_inner = task.inner_exclusive_access();
-        let trap_cx = task_inner.get_trap_cx();
+		let trap_cx = task_inner.get_trap_cx();
         let ustack_top = task_inner.res.as_ref().unwrap().ustack_top();
         let kstack_top = task.kstack.get_top();
         drop(task_inner);

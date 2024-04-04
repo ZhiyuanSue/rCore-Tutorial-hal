@@ -94,18 +94,19 @@ impl MemorySet {
     /// Without kernel stacks.
     pub fn new_kernel() -> Self {
         let mut memory_set = Self::new_bare();
+		/* we have already init a page table for this*/
         // map trampoline
-        // memory_set.map_trampoline();
+        memory_set.map_trampoline();
 
         // // map kernel sections
-        // println!(".text [{:#x}, {:#x})", stext as usize, etext as usize);
-        // println!(".rodata [{:#x}, {:#x})", srodata as usize, erodata as usize);
-        // println!(".data [{:#x}, {:#x})", _sdata as usize, _edata as usize);
-        // println!(
-        //     ".bss [{:#x}, {:#x})",
-        //     sbss_with_stack as usize, _ebss as usize
-        // );
-        // println!("mapping .text section");
+        println!(".text [{:#x}, {:#x})", stext as usize, etext as usize);
+        println!(".rodata [{:#x}, {:#x})", srodata as usize, erodata as usize);
+        println!(".data [{:#x}, {:#x})", _sdata as usize, _edata as usize);
+        println!(
+            ".bss [{:#x}, {:#x})",
+            sbss_with_stack as usize, _ebss as usize
+        );
+        println!("mapping .text section");
         
 		// memory_set.push(
         //     MapArea::new(
